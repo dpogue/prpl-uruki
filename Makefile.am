@@ -1,0 +1,6 @@
+SUBDIRS = src pixmaps
+
+EXTRA_DIST = \
+	AUTHORS \
+	COPYING \
+	INSTALL
