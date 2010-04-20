@@ -19,6 +19,7 @@
 #include "kiClient.h"
 #include "kiGateClient.h"
 #include "kiFileClient.h"
+#include "kiAuthClient.h"
 
 static void gate_connect(gpointer data, gint fd, const gchar* error) {
     kiClient* client = data;
@@ -101,7 +102,7 @@ kiClient::kiClient(PurpleAccount* account) {
 
     fClients[kGate] = new kiGateClient(this);
     fClients[kFile] = new kiFileClient(this);
-    fClients[kAuth] = NULL;
+    fClients[kAuth] = new kiAuthClient(this);
     fClients[kGame] = NULL;
 
     fConnectFunc[kGate] = gate_connect;
@@ -163,7 +164,9 @@ void kiClient::disconnect() {
     this->killClient(kGame);
 
     /* if we are connected to the AuthSrv, mark ourselves offline */
-    this->killClient(kAuth);
+    if (fClients[kAuth] != NULL && fCLient[kAuth]->isConnected()) {
+        this->killClient(kAuth);
+    }
 
     /* Disconnect from the FileSrv */
     if (fClients[kFile] != NULL && fClients[kFile]->isConnected()) {
@@ -178,8 +181,14 @@ gboolean kiClient::gate_file_callback(gpointer data) {
                 purple_account_get_connection(this->fAccount),
                 PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
                 _("Unable to connect"));
-        return;
+        return FALSE;
     }
+    return TRUE;
+}
+
+gboolean kiClient::file_build_callback(gpointer data) {
+    /* We have the build ID, so connect to AuthSrv */
+    return TRUE;
 }
 
 void kiClient::setAddress(ServType server, const plString address) {

@@ -42,6 +42,7 @@ public:
     void disconnect();
 
     gboolean gate_file_callback(gpointer data);
+    gboolean file_build_callback(gpointer data);
 
 private:
     std::list<hsUint32> fTransactions;
