@@ -39,7 +39,7 @@ public:
     void pop(hsUint32 transID);
 
     void connect();
-    gboolean gate_callback(gpointer data);
+    gboolean gate_file_callback(gpointer data);
 
 private:
     std::list<hsUint32> fTransactions;
@@ -58,6 +58,7 @@ public:
     void setAddress(ServType server, const plString address);
 
     pnClient* getClient(ServType client);
+    void killClient(ServType client);
 
     hsUint32 getBuildID() const { return fBuildID; }
     void setBuildID(const hsUint32 buildID) { fBuildID = buildID; }

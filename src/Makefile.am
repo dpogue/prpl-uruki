@@ -8,6 +8,7 @@ uruki_LTLIBRARIES = liburuki.la
 
 liburuki_la_SOURCES = \
 	kiClient.cpp \
+	kiFileClient.cpp \
 	kiGateClient.cpp \
 	kiPurple.cpp \
 	liburuki.cpp

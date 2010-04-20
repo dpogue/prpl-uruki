@@ -16,51 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kiGateClient.h"
+#include "kiFileClient.h"
 
-kiGateClient::kiGateClient(kiClient* master) {
-    setKeys(KEY_Gate_X, KEY_Gate_N);
-    setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
+kiFileClient::kiFileClient(kiClient* master) {
+    setClientInfo(KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
 }
 
-kiGateClient::~kiGateClient() {
+kiFileClient::~kiFileClient() {
     fMaster = NULL;
 }
 
-void kiGateClient::process() {
+void kiFileClient::process() {
     if (!this->isConnected()) {
         return;
     }
 
-    fMaster->push(this->sendFileSrvIpAddressRequest(1));
+    fMaster->push(this->sendBuildIdRequest());
     if (!this->isConnected()) {
         return;
     }
-    fCondFile.wait();
-    g_idle_add(fMaster->gate_file_callback, NULL);
-
-    fMaster->push(this->sendAuthSrvIpAddressRequest(1));
-    if (!this->isConnected()) {
-        return;
-    }
-    fCondAuth.wait();
+    fCondBuildId.wait();
+    /* g_idle_add(fMaster->file_build_callback, NULL); */
 }
 
-void kiGateClient::onFileSrvIpAddressReply(hsUint32 transId,
-        const plString& addr) {
-    fMaster->setAddress(kFile, addr);
+void kiFileClient::onBuildIdReply(hsUint32 transId, ENetError result,
+        hsUint32 buildId) {
+    fMaster->setBuildID(buildId);
     fMaster->pop(transId);
 
-    fCondFile.signal();
-}
-
-/* This shouldn't happen, since requesting the Auth IP disconnects us */
-void kiGateClient::onAuthSrvIpAddressReply(hsUint32 transId,
-        const plString& addr) {
-    fMaster->setAddress(kAuth, addr);
-    fMaster->pop(transId);
-    
-    fCondAuth.signal();
+    fCondBuildId.signal();
 }

@@ -41,10 +41,10 @@ hsUbyte KEY_Gate_X[] = { 0xB3, 0x88, 0xFF, 0x0B, 0x90, 0x70, 0x2B, 0x2E,
                          0x68, 0x82, 0x32, 0xC5, 0x89, 0x94, 0xF9, 0xCA,
                          0x69, 0x69, 0xD0, 0x60, 0x19, 0xB7, 0xF3, 0x1A };
 
-class kiGate : public pnGatekeeperClient {
+class kiGateClient : public pnGatekeeperClient {
 public:
-    kiGate(kiClient* master);
-    virtual ~kiGate();
+    kiGateClient(kiClient* master);
+    virtual ~kiGateClient();
 
     void process();
 

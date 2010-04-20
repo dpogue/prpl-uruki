@@ -18,6 +18,7 @@
 
 #include "kiClient.h"
 #include "kiGateClient.h"
+#include "kiFileClient.h"
 
 static void gate_connect(gpointer data, gint fd, const gchar* error) {
     kiClient* client = data;
@@ -44,6 +45,53 @@ static void gate_connect(gpointer data, gint fd, const gchar* error) {
     }
 
     client->getClient(kGate)->process();
+
+    if (!client->getClient(kGate)->isConnected()) {
+        tmp = g_strdup_printf(_("Network Error: %s"), "GateKeeperSrv");
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    } else {
+        client->killClient(kGate);
+    }
+}
+
+static void file_connect(gpointer data, gint fd, const gchar* error) {
+    kiClient* client = data;
+    gchar* tmp;
+    ENetError err;
+
+    if (fd < 0) {
+        tmp = g_strdup_printf(_("Unable to connect: %s"), error);
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
+
+    if ((err = client->getClient(kFile)->connect(fd)) != kNetSuccess) {
+        tmp = g_strdup_printf(_("Unable to connect: %s"),
+                GetNetErrorString(err));
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
+
+    client->getClient(kFile)->process();
+
+    if (!client->getClient(kFile)->isConnected()) {
+        tmp = g_strdup_printf(_("Network Error: %s"), "FileSrv");
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
 }
 
 kiClient::kiClient(PurpleAccount* account) {
@@ -52,9 +100,11 @@ kiClient::kiClient(PurpleAccount* account) {
     fBuildID = 0;
 
     fClients[kGate] = new kiGateClient(this);
+    fClients[kFile] = new kiFileClient(this);
     // Other clients
 
     fConnectFunc[kGate] = gate_connect;
+    fConnectFunc[kFile] = file_connect;
     // Other callbacks
 
     fAccount = account;
@@ -89,8 +139,15 @@ void connect() {
     }
 }
 
-gboolean kiClient::gate_callback(gpointer data) {
-    /* Do FileClient connect */
+gboolean kiClient::gate_file_callback(gpointer data) {
+    if (purple_proxy_connect(this, this->fAccount, this->fFileAddr,
+             14617, this->fConnectFunc[kFile], this) == NULL) {
+        purple_connection_error_reason(
+                purple_account_get_connection(this->fAccount),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
+                _("Unable to connect"));
+        return;
+    }
 }
 
 void kiClient::setAddress(ServType server, const plString address) {
@@ -125,4 +182,17 @@ pnClient* kiClient::getClient(ServType client) {
         default:
             return NULL;
     }
+}
+
+void kiClient::killClient(ServType client) {
+    if (client > kGame) {
+        return;
+    }
+
+    pnClient* cli = fClients[client];
+    if (cli->isConnected()) {
+        cli->disconnect();
+    }
+    delete cli;
+    fClient[client] = NULL;
 }
