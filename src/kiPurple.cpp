@@ -43,6 +43,32 @@ GList* ki_status_types(PurpleAccount* account) {
 	return types;
 }
 
+void ki_login(PurpleAccount* account) {
+    PurpleConnection* pc = purple_account_get_connection(account);
+    kiClient* ki;
+
+    pc->flags |=
+        PURPLE_CONNECTION_NO_BGCOLOR |
+        PURPLE_CONNECTION_FORMATTING_WBFO | 
+        PURPLE_CONNECTION_NO_NEWLINES |
+        PURPLE_CONNECTION_NO_FONTSIZE |
+        PURPLE_CONNECTION_NO_URLDESC |
+        PURPLE_CONNECTION_NO_IMAGES;
+
+    ki = new kiClient(account);
+    pc->proto_data = ki;
+
+    ki->connect();
+}
+
+void ki_close(PurpleConnection* pc) {
+    kiClient* ki = pc->proto_data;
+    ki->disconnect();
+    delete ki;
+
+    pc->proto_data = NULL;
+}
+
 gboolean ki_offline_message(const PurpleBuddy* buddy) {
     return FALSE;
 }

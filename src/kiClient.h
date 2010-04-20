@@ -39,6 +39,8 @@ public:
     void pop(hsUint32 transID);
 
     void connect();
+    void disconnect();
+
     gboolean gate_file_callback(gpointer data);
 
 private:

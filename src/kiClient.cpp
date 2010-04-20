@@ -101,7 +101,8 @@ kiClient::kiClient(PurpleAccount* account) {
 
     fClients[kGate] = new kiGateClient(this);
     fClients[kFile] = new kiFileClient(this);
-    // Other clients
+    fClients[kAuth] = NULL;
+    fClients[kGame] = NULL;
 
     fConnectFunc[kGate] = gate_connect;
     fConnectFunc[kFile] = file_connect;
@@ -110,13 +111,31 @@ kiClient::kiClient(PurpleAccount* account) {
     fAccount = account;
 }
 
-void push(hsUint32 transID) {
+kiClient::~kiClient() {
+    int i = 0;
+    for (i = 0; i < kNumServers; i++) {
+        pnClient* cli = fClients[i];
+        if (cli == NULL) {
+            continue;
+        }
+
+        if (cli->isConnected()) {
+            cli->disconnect();
+        }
+        delete cli;
+        fClients[i] = NULL;
+    }
+
+    fAccount = NULL;
+}
+
+void kiClient::push(hsUint32 transID) {
     fNetMutex.lock();
     fTransactions.push_back(transID);
     fnetMutex.unlock();
 }
 
-void pop(hsUint32 transID) {
+void kiClient::pop(hsUint32 transID) {
     fNetMutex.lock(); 
     std::list<hsUint32>::iterator i;
     for (i = fTransactions.begin(); i != fTransactions.end(); i++) {
@@ -128,7 +147,7 @@ void pop(hsUint32 transID) {
     fNetMutex.unlock();
 }
 
-void connect() {
+void kiClient::connect() {
     if (purple_proxy_connect(this, this->fAccount, this->fGateAddr,
              14617, this->fConnectFunc[kGate], this) == NULL) {
         purple_connection_error_reason(
@@ -136,6 +155,19 @@ void connect() {
                 PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
                 _("Unable to connect"));
         return;
+    }
+}
+
+void kiClient::disconnect() {
+    /* if we are connected to a GameSrv, send some logout message */
+    this->killClient(kGame);
+
+    /* if we are connected to the AuthSrv, mark ourselves offline */
+    this->killClient(kAuth);
+
+    /* Disconnect from the FileSrv */
+    if (fClients[kFile] != NULL && fClients[kFile]->isConnected()) {
+        this->killClient(kFile);
     }
 }
 
@@ -190,7 +222,7 @@ void kiClient::killClient(ServType client) {
     }
 
     pnClient* cli = fClients[client];
-    if (cli->isConnected()) {
+    if (cli != NULL && cli->isConnected()) {
         cli->disconnect();
     }
     delete cli;
