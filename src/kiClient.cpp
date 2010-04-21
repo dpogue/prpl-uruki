@@ -95,6 +95,42 @@ static void file_connect(gpointer data, gint fd, const gchar* error) {
     }
 }
 
+static void auth_connect(gpointer data, gint fd, const gchar* error) {
+    kiClient* client = data;
+    gchar* tmp;
+    ENetError err;
+
+    if (fd < 0) {
+        tmp = g_strdup_printf(_("Unable to connect: %s"), error);
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
+
+    if ((err = client->getClient(kAuth)->connect(fd)) != kNetSuccess) {
+        tmp = g_strdup_printf(_("Unable to connect: %s"),
+                GetNetErrorString(err));
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
+
+    client->getClient(kAuth)->process();
+
+    if (!client->getClient(kAuth)->isConnected()) {
+        tmp = g_strdup_printf(_("Network Error: %s"), "AuthSrv");
+        purple_connection_error_reason(
+                purple_account_get_connection(client->getAccount()),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
+        g_free(tmp);
+        return;
+    }
+}
+
 kiClient::kiClient(PurpleAccount* account) {
     fGateAddr = "184.73.198.22";
     fAuthAddr = "184.73.198.22";
@@ -103,11 +139,12 @@ kiClient::kiClient(PurpleAccount* account) {
     fClients[kGate] = new kiGateClient(this);
     fClients[kFile] = new kiFileClient(this);
     fClients[kAuth] = new kiAuthClient(this);
-    fClients[kGame] = NULL;
+    fClients[kGame] = NULL; /* new kiGameClient(this); */
 
     fConnectFunc[kGate] = gate_connect;
     fConnectFunc[kFile] = file_connect;
-    // Other callbacks
+    fConnectFunc[kAuth] = auth_connect;
+    /* fConnectFunc[kGame] = game_connect; */
 
     fAccount = account;
 }
@@ -187,7 +224,14 @@ gboolean kiClient::gate_file_callback(gpointer data) {
 }
 
 gboolean kiClient::file_build_callback(gpointer data) {
-    /* We have the build ID, so connect to AuthSrv */
+    if (purple_proxy_connect(this, this->fAccount, this->fAuthAddr,
+             14617, this->fConnectFunc[kAuth], this) == NULL) {
+        purple_connection_error_reason(
+                purple_account_get_connection(this->fAccount),
+                PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
+                _("Unable to connect"));
+        return FALSE;
+    }
     return TRUE;
 }
 

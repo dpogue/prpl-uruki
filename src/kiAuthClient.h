@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _KI_GATECLIENT_H
-#define _KI_GATECLIENT_H
+#ifndef _KI_AUTHCLIENT_H
+#define _KI_AUTHCLIENT_H
 
 #include "kiDefines.h"
 #include "kiClient.h"

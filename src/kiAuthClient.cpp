@@ -16,35 +16,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kiFileClient.h"
+#include "kiAuthClient.h"
 
-kiFileClient::kiFileClient(kiClient* master) {
-    setClientInfo(KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
+kiAuthClient::kiAuthClient(kiClient* master) {
+    setKeys(KEY_Auth_X, KEY_Auth_N);
+    setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
 }
 
-kiFileClient::~kiFileClient() {
+kiAuthClient::~kiAuthClient() {
     fMaster = NULL;
 }
 
-void kiFileClient::process() {
+void kiAuthClient::process() {
     if (!this->isConnected()) {
         return;
     }
 
-    fMaster->push(this->sendBuildIdRequest());
+    /*
+    fMaster->push(this->sendFileSrvIpAddressRequest(1));
     if (!this->isConnected()) {
         return;
     }
-    fCondBuildId.wait();
-    g_idle_add(fMaster->file_build_callback, NULL);
+    fCondFile.wait();
+    g_idle_add(fMaster->auth_file_callback, NULL);
+
+    fMaster->push(this->sendAuthSrvIpAddressRequest(1));
+    if (!this->isConnected()) {
+        return;
+    }
+    fCondAuth.wait();
+    */
 }
 
-void kiFileClient::onBuildIdReply(hsUint32 transId, ENetError result,
-        hsUint32 buildId) {
-    fMaster->setBuildID(buildId);
-    fMaster->pop(transId);
-
-    fCondBuildId.signal();
-}
