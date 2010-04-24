@@ -22,6 +22,11 @@ const char* ki_list_icon(PurpleAccount* account, PurpleBuddy* buddy) {
     return "uruki";
 }
 
+char* ki_status_text(PurpleBuddy* buddy) {
+    /* TODO */
+    return NULL;
+}
+
 GList* ki_status_types(PurpleAccount* account) {
     GList* types = NULL;
 	PurpleStatusType* status;
@@ -67,6 +72,58 @@ void ki_close(PurpleConnection* pc) {
     delete ki;
 
     pc->proto_data = NULL;
+}
+
+int ki_send_pm(PurpleConnection* pc, const char* who,
+                const char* message, PurpleMessageFlags flags) {
+    /* TODO */
+    return 0;
+}
+
+void ki_get_info(PurpleConnection* pc, const char* who) {
+    /* TODO */
+    return;
+}
+
+void ki_set_status(PurpleAccount* account, PurpleStatus* status) {
+    /* TODO */
+}
+
+void ki_add_buddy(PurpleConnection* pc, PurpleBuddy* buddy,
+                    PurpleGroup* group) {
+    /* TODO */
+    return;
+}
+
+void ki_add_buddies(PurpleConnection* pc, GList* buddies, GList* groups) {
+    /* TODO */
+    return;
+}
+
+void ki_remove_buddy(PurpleConnection* pc, PurpleBuddy* buddy,
+                      PurpleGroup* group) {
+    /* TODO */
+    return;
+}
+
+void ki_ignore(PurpleConnection* pc, const char* name) {
+    /* TODO */
+    return;
+}
+
+void ki_unignore(PurpleConnection* pc, const char* name) {
+    /* TODO */
+    return;
+}
+
+void ki_keepalive(PurpleConnection* pc) {
+    /* TODO */
+    return;
+}
+
+const char* ki_normalise(const PurpleAccount* account, const char* who) {
+    /* TODO */
+    return who;
 }
 
 gboolean ki_offline_message(const PurpleBuddy* buddy) {
