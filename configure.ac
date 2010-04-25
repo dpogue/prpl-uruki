@@ -1,7 +1,7 @@
 m4_define(uruki_version, [0.0.1])
 
 AC_PREREQ([2.61])
-AC_INIT([prpl-uruki], [uruki_version], [dvpdiner2@gmail.com])
+AC_INIT([prpl-uruki], [uruki_version], [Darryl Pogue <dvpdiner2@gmail.com>], [prpl-uruki], [http://prpl-uruki.googlecode.com/])
 AC_CONFIG_SRCDIR([src/liburuki.cpp])
 
 
@@ -24,8 +24,9 @@ AH_TOP([
 #define _KI_CONFIG_H
 ])
 AH_BOTTOM([#endif])
+AC_DEFINE_UNQUOTED([KI_IDNAME], ["$PACKAGE"], [prpl-uruki plugin id string])
 AC_DEFINE_UNQUOTED([KI_VERSION], ["uruki_version"], [prpl-uruki version string])
-
+AC_DEFINE_UNQUOTED([KI_AUTHOR], ["$PACKAGE_BUGREPORT"], [prpl-uruki author])
 
 # Check C compiler
 CFLAGS_save="$CFLAGS"
@@ -39,7 +40,7 @@ CXXFLAGS="$CXXFLAGS_save"
 AC_ARG_ENABLE(debug, [  --enable-debug          Compile with debugging support.],, enable_debug=no)
 
 if test $enable_debug = "yes"; then
-	DEBUG_CFLAGS="$DEBUG_CFLAGS -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED"
+	DEBUG_CFLAGS="$DEBUG_CFLAGS -DG_DISABLE_DEPRECATED"
 	AC_DEFINE(DEBUG, 1, [Define if debugging is enabled.])
 fi
 
@@ -65,7 +66,9 @@ AC_SUBST(GLIB_LIBS)
 # Plugins
 want_plugins=yes
 AM_CONDITIONAL(PLUGINS, test "$want_plugins"="yes")
-
+if test "$want_plugins"="yes"; then
+	AC_DEFINE([PURPLE_PLUGINS], 1, [build as plugin])
+fi
 
 # Setup libtool
 AC_DISABLE_STATIC
@@ -74,7 +77,7 @@ LIBTOOL="$LIBTOOL --silent"
 
 AM_CONFIG_HEADER(config.h)
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile pixmaps/Makefile])
 AC_OUTPUT
 
 echo

@@ -16,11 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _KI_DEFINES_H
-#define _KI_DEFINES_H
-
-#define PURPLE_PLUGINS
-#define GETTEXT_PACKAGE "prpl-uruki"
+#ifndef _KI_HEADERS_H
+#define _KI_HEADERS_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -55,7 +52,6 @@
 #include <version.h>
 
 /* Other defines */
-#define KI_VERSION "0.01"
 #define KI_UUID plUuid("ea489821-6c35-4bd0-9dae-bb17c585e680")
 #define KI_BRANCHID 1
 #define KI_BUILDTYPE 50

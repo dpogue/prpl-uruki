@@ -19,7 +19,7 @@
 #ifndef _KI_CLIENT_H
 #define _KI_CLIENT_H
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include <list>
 
 struct kiVaultBuddy {

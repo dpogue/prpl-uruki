@@ -19,7 +19,7 @@
 #ifndef _KI_GATECLIENT_H
 #define _KI_GATECLIENT_H
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include "kiClient.h"
 #include "gate/pnGateKeeperClient.h"
 

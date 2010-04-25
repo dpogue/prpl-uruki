@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include "kiPurple.h"
 
 PurplePluginProtocolInfo prpl_info = {
@@ -110,7 +110,7 @@ static PurplePluginInfo info =
 	0,                            /* Flags */
 	NULL,                         /* dependencies */
 	PURPLE_PRIORITY_DEFAULT,      /* priority */
-	g_strdup("prpl-uruki"),       /* prpl id */
+	g_strdup(KI_IDNAME),          /* prpl id */
 	g_strdup("Uru KI Network"),   /* prpl name */
 	g_strdup(KI_VERSION),         /* version */
 	
@@ -119,7 +119,7 @@ static PurplePluginInfo info =
     /* Description */
 	_("Connect to the cavern while you're on the surface."),
     /* Author */
-	g_strdup("Darryl Pogue <dvpdiner2@gmail.com>"),
+	g_strdup(KI_AUTHOR),
     /* Homepage */
 	_("http://mystonline.com/"),
 

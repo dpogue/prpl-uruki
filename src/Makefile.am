@@ -31,6 +31,7 @@ endif
 AM_CPPFLAGS = \
 	-DLIBDIR=\"$(libdir)/purple-2/\" \
 	-DDATADIR=\"$(datadir)\" \
+	$(CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(PURPLE_CFLAGS) \
 	$(DEBUG_CFLAGS)

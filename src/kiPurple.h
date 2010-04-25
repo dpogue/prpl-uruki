@@ -19,7 +19,7 @@
 #ifndef _KI_PURPLE_H
 #define _KI_PURPLE_H
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include "kiClient.h"
 
 #ifdef __cplusplus

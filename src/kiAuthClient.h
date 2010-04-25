@@ -19,7 +19,7 @@
 #ifndef _KI_AUTHCLIENT_H
 #define _KI_AUTHCLIENT_H
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include "kiClient.h"
 #include "auth/pnAuthClient.h"
 

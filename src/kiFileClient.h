@@ -19,7 +19,7 @@
 #ifndef _KI_FILECLIENT_H
 #define _KI_FILECLIENT_H
 
-#include "kiDefines.h"
+#include "kiHeaders.h"
 #include "kiClient.h"
 #include "file/pnFileClient.h"
 
