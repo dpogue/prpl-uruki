@@ -60,7 +60,7 @@ void ki_login(PurpleAccount* account) {
         PURPLE_CONNECTION_NO_URLDESC |
         PURPLE_CONNECTION_NO_IMAGES;
 
-    ki = new kiClient(account);
+    ki = new kiClient(pc, account);
     pc->proto_data = ki;
 
     ki->connect();

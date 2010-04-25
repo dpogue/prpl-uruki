@@ -22,6 +22,13 @@
 #include "kiDefines.h"
 #include <list>
 
+struct kiVaultBuddy {
+    hsUint32 fPlayerKI;
+    plString fPlayerName;
+    plString fLocation;
+    hsInt32 fOnline;
+};
+
 class kiClient {
 public:
     enum ServType {
@@ -32,7 +39,7 @@ public:
         kNumServers
     };
 
-    kiClient(PurpleAccount* account);
+    kiClient(PurpleConnection* pc, PurpleAccount* account);
     virtual ~kiClient();
 
     void push(hsUint32 transID);
@@ -49,6 +56,8 @@ private:
     hsMutex fNetMutex;
 
     PurpleAccount* fAccount;
+    PurpleConnection* fConnection;
+    std::map<hsUint32, kiVaultBuddy> fBuddies;
     plString fGateAddr;
     plString fAuthAddr;
     plString fFileAddr;
@@ -65,6 +74,10 @@ public:
 
     hsUint32 getBuildID() const { return fBuildID; }
     void setBuildID(const hsUint32 buildID) { fBuildID = buildID; }
+
+    const char* getUsername() const;
+    const char* getPassword() const;
+    const hsUint32 getKINumber() const;
 };
 
 #endif

@@ -131,7 +131,7 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
     }
 }
 
-kiClient::kiClient(PurpleAccount* account) {
+kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
     fGateAddr = "184.73.198.22";
     fAuthAddr = "184.73.198.22";
     fBuildID = 0;
@@ -146,6 +146,7 @@ kiClient::kiClient(PurpleAccount* account) {
     fConnectFunc[kAuth] = auth_connect;
     /* fConnectFunc[kGame] = game_connect; */
 
+    fConnection = pc;
     fAccount = account;
 }
 
@@ -165,6 +166,7 @@ kiClient::~kiClient() {
     }
 
     fAccount = NULL;
+    fConnection = NULL;
 }
 
 void kiClient::push(hsUint32 transID) {
@@ -280,4 +282,27 @@ void kiClient::killClient(ServType client) {
     }
     delete cli;
     fClient[client] = NULL;
+}
+
+const char* kiClient::getUsername() const {
+    const char* fullname = purple_account_get_username(fAccount);
+    char** usersplits = g_strsplit(fullname, "/", 2);
+    char* username = g_utf8_strdown(usersplits[0], -1);
+
+    g_free(usersplits);
+
+    return username;
+}
+
+const char* kiClient::getPassword() const {
+    return purple_connection_get_password(fConnection);
+}
+
+const hsUint32 kiClient::getKINumber() const {
+    const char* fullname = purple_account_get_username(fAccount);
+    char** usersplits = g_strsplit(fullname, "/", 2);
+    hsUint32 kiNumber = plString(usersplits[1]).toInt();
+    g_free(usersplits);
+
+    return kiNumber;
 }
