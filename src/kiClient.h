@@ -48,8 +48,8 @@ public:
     void connect();
     void disconnect();
 
-    gboolean gate_file_callback(gpointer data);
-    gboolean file_build_callback(gpointer data);
+    gboolean gate_file_callback();
+    gboolean file_build_callback();
 
 private:
     std::list<hsUint32> fTransactions;
@@ -63,7 +63,7 @@ private:
     plString fFileAddr;
     plString fGameAddr;
     pnClient* fClients[kNumServers];
-    PurpleProxyConnectFunction fConnectFuncs[kNumServers];
+    PurpleProxyConnectFunction fConnectFunc[kNumServers];
     hsUint32 fBuildID;
 
 public:
@@ -74,6 +74,9 @@ public:
 
     hsUint32 getBuildID() const { return fBuildID; }
     void setBuildID(const hsUint32 buildID) { fBuildID = buildID; }
+
+    PurpleAccount* getAccount() const { return fAccount; }
+    PurpleConnection* getConnection() const { return fConnection; }
 
     const char* getUsername() const;
     const char* getPassword() const;

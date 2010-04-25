@@ -18,6 +18,11 @@
 
 #include "kiFileClient.h"
 
+static gboolean file_build_callback(gpointer data) {
+    kiClient* client = (kiClient*)data;
+    return client->file_build_callback();
+}
+
 kiFileClient::kiFileClient(kiClient* master) {
     setClientInfo(KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
@@ -38,7 +43,7 @@ void kiFileClient::process() {
         return;
     }
     fCondBuildId.wait();
-    g_idle_add(fMaster->file_build_callback, NULL);
+    g_idle_add(file_build_callback, fMaster);
 }
 
 void kiFileClient::onBuildIdReply(hsUint32 transId, ENetError result,

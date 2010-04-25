@@ -20,6 +20,7 @@
 #define _KI_PURPLE_H
 
 #include "kiDefines.h"
+#include "kiClient.h"
 
 #ifdef _cplusplus
 extern "C" {

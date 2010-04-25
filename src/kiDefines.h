@@ -38,6 +38,7 @@
 
 /* libpurple headers */
 #include <account.h>
+#include <accountopt.h>
 #include <blist.h>
 #include <connection.h>
 #include <plugin.h>

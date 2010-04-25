@@ -52,13 +52,13 @@ void ki_login(PurpleAccount* account) {
     PurpleConnection* pc = purple_account_get_connection(account);
     kiClient* ki;
 
-    pc->flags |=
+    pc->flags = (PurpleConnectionFlags)(
         PURPLE_CONNECTION_NO_BGCOLOR |
         PURPLE_CONNECTION_FORMATTING_WBFO | 
         PURPLE_CONNECTION_NO_NEWLINES |
         PURPLE_CONNECTION_NO_FONTSIZE |
         PURPLE_CONNECTION_NO_URLDESC |
-        PURPLE_CONNECTION_NO_IMAGES;
+        PURPLE_CONNECTION_NO_IMAGES);
 
     ki = new kiClient(pc, account);
     pc->proto_data = ki;
@@ -67,7 +67,7 @@ void ki_login(PurpleAccount* account) {
 }
 
 void ki_close(PurpleConnection* pc) {
-    kiClient* ki = pc->proto_data;
+    kiClient* ki = (kiClient*)(pc->proto_data);
     ki->disconnect();
     delete ki;
 

@@ -22,7 +22,7 @@
 #include "kiAuthClient.h"
 
 static void gate_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = data;
+    kiClient* client = (kiClient*)data;
     gchar* tmp;
     ENetError err;
 
@@ -35,7 +35,8 @@ static void gate_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    if ((err = client->getClient(kGate)->connect(fd)) != kNetSuccess) {
+    if ((err = client->getClient(kiClient::kGate)->connect(fd))
+            != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
                 GetNetErrorString(err));
         purple_connection_error_reason(
@@ -45,9 +46,9 @@ static void gate_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    client->getClient(kGate)->process();
+    ((kiGateClient*)client->getClient(kiClient::kGate))->process();
 
-    if (!client->getClient(kGate)->isConnected()) {
+    if (!client->getClient(kiClient::kGate)->isConnected()) {
         tmp = g_strdup_printf(_("Network Error: %s"), "GateKeeperSrv");
         purple_connection_error_reason(
                 purple_account_get_connection(client->getAccount()),
@@ -55,12 +56,12 @@ static void gate_connect(gpointer data, gint fd, const gchar* error) {
         g_free(tmp);
         return;
     } else {
-        client->killClient(kGate);
+        client->killClient(kiClient::kGate);
     }
 }
 
 static void file_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = data;
+    kiClient* client = (kiClient*)data;
     gchar* tmp;
     ENetError err;
 
@@ -73,7 +74,8 @@ static void file_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    if ((err = client->getClient(kFile)->connect(fd)) != kNetSuccess) {
+    if ((err = client->getClient(kiClient::kFile)->connect(fd))
+            != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
                 GetNetErrorString(err));
         purple_connection_error_reason(
@@ -83,9 +85,9 @@ static void file_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    client->getClient(kFile)->process();
+    ((kiFileClient*)client->getClient(kiClient::kFile))->process();
 
-    if (!client->getClient(kFile)->isConnected()) {
+    if (!client->getClient(kiClient::kFile)->isConnected()) {
         tmp = g_strdup_printf(_("Network Error: %s"), "FileSrv");
         purple_connection_error_reason(
                 purple_account_get_connection(client->getAccount()),
@@ -96,7 +98,7 @@ static void file_connect(gpointer data, gint fd, const gchar* error) {
 }
 
 static void auth_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = data;
+    kiClient* client = (kiClient*)data;
     gchar* tmp;
     ENetError err;
 
@@ -109,7 +111,8 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    if ((err = client->getClient(kAuth)->connect(fd)) != kNetSuccess) {
+    if ((err = client->getClient(kiClient::kAuth)->connect(fd))
+            != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
                 GetNetErrorString(err));
         purple_connection_error_reason(
@@ -119,9 +122,9 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
-    client->getClient(kAuth)->process();
+    ((kiAuthClient*)client->getClient(kiClient::kAuth))->process();
 
-    if (!client->getClient(kAuth)->isConnected()) {
+    if (!client->getClient(kiClient::kAuth)->isConnected()) {
         tmp = g_strdup_printf(_("Network Error: %s"), "AuthSrv");
         purple_connection_error_reason(
                 purple_account_get_connection(client->getAccount()),
@@ -172,7 +175,7 @@ kiClient::~kiClient() {
 void kiClient::push(hsUint32 transID) {
     fNetMutex.lock();
     fTransactions.push_back(transID);
-    fnetMutex.unlock();
+    fNetMutex.unlock();
 }
 
 void kiClient::pop(hsUint32 transID) {
@@ -203,7 +206,7 @@ void kiClient::disconnect() {
     this->killClient(kGame);
 
     /* if we are connected to the AuthSrv, mark ourselves offline */
-    if (fClients[kAuth] != NULL && fCLient[kAuth]->isConnected()) {
+    if (fClients[kAuth] != NULL && fClients[kAuth]->isConnected()) {
         this->killClient(kAuth);
     }
 
@@ -213,7 +216,7 @@ void kiClient::disconnect() {
     }
 }
 
-gboolean kiClient::gate_file_callback(gpointer data) {
+gboolean kiClient::gate_file_callback() {
     if (purple_proxy_connect(this, this->fAccount, this->fFileAddr,
              14617, this->fConnectFunc[kFile], this) == NULL) {
         purple_connection_error_reason(
@@ -225,7 +228,7 @@ gboolean kiClient::gate_file_callback(gpointer data) {
     return TRUE;
 }
 
-gboolean kiClient::file_build_callback(gpointer data) {
+gboolean kiClient::file_build_callback() {
     if (purple_proxy_connect(this, this->fAccount, this->fAuthAddr,
              14617, this->fConnectFunc[kAuth], this) == NULL) {
         purple_connection_error_reason(
@@ -281,7 +284,7 @@ void kiClient::killClient(ServType client) {
         cli->disconnect();
     }
     delete cli;
-    fClient[client] = NULL;
+    fClients[client] = NULL;
 }
 
 const char* kiClient::getUsername() const {
