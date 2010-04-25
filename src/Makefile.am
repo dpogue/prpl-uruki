@@ -1,8 +1,20 @@
-urukidir = $(LIBPURPLE_LIBDIR)/purple-2
+EXTRA_DIST = \
+	kiAuthClient.h \
+	kiDefines.h \
+	kiGateClient.h \
+	kiClient.h \
+	kiFileClient.h \
+	kiPurple.h
 
+INCLUDES = \
+	-I$(top_srcdir) \
+    -DLOCALEDIR=\""$(localedir)"\"
+
+plugindir = $(libdir)/purple-2
 liburuki_la_LDFLAGS = -module -avoid-version
 
-uruki_LTLIBRARIES = liburuki.la
+if PLUGINS
+plugin_LTLIBRARIES = liburuki.la
 
 liburuki_la_SOURCES = \
 	kiClient.cpp \
@@ -12,14 +24,15 @@ liburuki_la_SOURCES = \
 	kiPurple.cpp \
 	liburuki.cpp
 
-liburuki_la_LIBADD = $(GLIB_LIBS) $(PURPLE_LIBS) $(HSPLASMA_LIBS) $(HSPLASMANET_LIBS)
+liburuki_la_LIBADD = \
+	$(PURPLE_LIBS) $(GLIB_LIBS) $(HSPLASMA_LIBS) $(HSPLASMANET_LIBS)
+endif
 
 AM_CPPFLAGS = \
-	-DLIBDIR=\"$(LIBPURPLE_LIBDIR)/purple-2/\" \
-	-DDATADIR=\"$(LIBPURPLE_DATADIR)\" \
-	-DLOCALEDIR=\"$(LIBPURPLE_DATADIR)/locale\" \
-	$(GLIB_CXXFLAGS) \
-	$(LIBPURPLE_CXXFLAGS) \
-	$(HSPLASMA_CXXFLAGS) \
-	$(HSPLASMANET_CXXFLAGS)
+	-DLIBDIR=\"$(libdir)/purple-2/\" \
+	-DDATADIR=\"$(datadir)\" \
+	$(GLIB_CFLAGS) \
+	$(PURPLE_CFLAGS) \
+	$(DEBUG_CFLAGS)
 
+AM_CFLAGS = -DPURPLE_PLUGINS

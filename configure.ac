@@ -1,85 +1,87 @@
+m4_define(uruki_version, [0.0.1])
+
 AC_PREREQ([2.61])
+AC_INIT([prpl-uruki], [uruki_version], [dvpdiner2@gmail.com])
+AC_CONFIG_SRCDIR([src/liburuki.cpp])
 
 
-AC_INIT([prpl-uruki], [0.0.1], [dvpdiner2@gmail.com])
+AM_INIT_AUTOMAKE([prpl-uruki], [uruki_version], "")
 
+AC_PATH_PROG(sedpath, sed)
 AC_CONFIG_MACRO_DIR([m4])
 
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
-AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability])
-
+# Internationalisation support
 AM_PROG_LIBTOOL
-AM_CONFIG_HEADER(config.h)
-AM_PROG_MKDIR_P
+GETTEXT_PACKAGE="$PACKAGE"
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, ["$GETTEXT_PACKAGE"], [Define the gettext package to be used])
+#ALL_LINGUAS="cz de ee es fr ro sk sv"
+AM_GLIB_GNU_GETTEXT
 
-# Checks for programs.
+# Config header
+AH_TOP([
+#ifndef _KI_CONFIG_H
+#define _KI_CONFIG_H
+])
+AH_BOTTOM([#endif])
+AC_DEFINE_UNQUOTED([KI_VERSION], ["uruki_version"], [prpl-uruki version string])
+
+
+# Check C compiler
+CFLAGS_save="$CFLAGS"
 AC_PROG_CC
-AC_PROG_CC_STDC
+CFLAGS="$CFLAGS_save"
+
+CXXFLAGS_save="$CXXFLAGS"
 AC_PROG_CXX
-AC_PROG_INSTALL
-PKG_PROG_PKG_CONFIG
+CXXFLAGS="$CXXFLAGS_save"
 
-# Checks for header files.
-AC_HEADER_STDC
-AC_C_INLINE
+AC_ARG_ENABLE(debug, [  --enable-debug          Compile with debugging support.],, enable_debug=no)
 
-# Checks for required libraries
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.12.0 gthread-2.0], , [
-	AC_MSG_RESULT(no)
-	AC_MSG_ERROR([
+if test $enable_debug = "yes"; then
+	DEBUG_CFLAGS="$DEBUG_CFLAGS -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED"
+	AC_DEFINE(DEBUG, 1, [Define if debugging is enabled.])
+fi
 
-You must have GLib 2.12.0 or newer development headers installed to build.
+AC_SUBST(DEBUG_CFLAGS)
 
-If you have these installed already you may need to install pkg-config so
-I can find them.
-])])
-AC_SUBST(GLIB_CXXFLAGS)
-AC_SUBST(GLIB_LIBS)
+if test "x$G++"="xyes"; then
+	CFLAGS="$CFLAGS -Wall -g3"
+fi
+AC_SUBST(CFLAGS)
 
-PKG_CHECK_MODULES(PURPLE, [purple >= 2.6.0], , [
-	AC_MSG_RESULT(no)
-	AC_MSG_ERROR([
 
-You must have libpurple 2.6.0 or newer development headers installed to build.
+# Check for libpurple
+PKG_CHECK_MODULES(PURPLE, purple, [AC_DEFINE(HAVE_PURPLE, 1, [Define if we've found libpurple.])])
 
-If you have these installed already you may need to install pkg-config so
-I can find them.
-])])
-AC_SUBST(PURPLE_CXXFLAGS)
+AC_SUBST(PURPLE_CFLAGS)
 AC_SUBST(PURPLE_LIBS)
 
-PKG_CHECK_MODULES(HSPLASMA, [libhsplasma >= 0.1], , [
-	AC_MSG_RESULT(no)
-	AC_MSG_ERROR([
-
-You must have libhsplasma 0.1 or newer development headers installed to build.
-
-If you have these installed already you may need to install pkg-config so
-I can find them.
-])])
-AC_SUBST(HSPLASMA_CXXFLAGS)
-AC_SUBST(HSPLASMA_LIBS)
-
-PKG_CHECK_MODULES(HSPLASMANET, [libhsplasma-net >= 0.1], , [
-	AC_MSG_RESULT(no)
-	AC_MSG_ERROR([
-
-You must have libhsplasma-net 0.1 or newer development headers installed to build.
-
-If you have these installed already you may need to install pkg-config so
-I can find them.
-])])
-AC_SUBST(HSPLASMANET_CXXFLAGS)
-AC_SUBST(HSPLASMANET_LIBS)
+AM_PATH_GLIB_2_0(2.12.0,, AC_MSG_ERROR([GLib 2.0 is required to build Gfire; please make sure you have the GLib development headers installed. The latest version of GLib is always available at http://www.gtk.org]), gthread)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 
-AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+# Plugins
+want_plugins=yes
+AM_CONDITIONAL(PLUGINS, test "$want_plugins"="yes")
+
+
+# Setup libtool
+AC_DISABLE_STATIC
+AM_PROG_LIBTOOL
+LIBTOOL="$LIBTOOL --silent"
+
+AM_CONFIG_HEADER(config.h)
+
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
 
 echo
 echo $PACKAGE $VERSION
+echo "Configuration complete."
+echo
+echo "Debugging enabled.............: $enable_debug"
 echo
 echo configure complete, now type \'make\'
 echo
