@@ -22,7 +22,7 @@
 #include "kiDefines.h"
 #include "kiClient.h"
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -61,7 +61,7 @@ const char* ki_normalise(const PurpleAccount* account, const char* who);
 
 gboolean ki_offline_message(const PurpleBuddy* buddy);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

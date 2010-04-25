@@ -145,10 +145,10 @@ static void _init_plugin(PurplePlugin *plugin)
 
 }
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 PURPLE_INIT_PLUGIN(uruki, _init_plugin, info);
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif

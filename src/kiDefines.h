@@ -19,10 +19,16 @@
 #ifndef _KI_DEFINES_H
 #define _KI_DEFINES_H
 
+#define PURPLE_PLUGINS
+#define GETTEXT_PACKAGE "prpl-uruki"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* libpurple uses glib */
 #include <glib.h>
 
-#define GETTEXT_PACKAGE "prpl-uruki"
 #ifdef ENABLE_NLS
 #	ifdef _WIN32
 #		include <win32dep.h>
