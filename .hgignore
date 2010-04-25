@@ -1,0 +1,14 @@
+syntax: glob
+*.o
+*.a
+*.so
+*.log
+*.dSYM
+.*.swp
+Makefile
+
+syntax: regexp
+^dat/
+^doc/
+CMakeFiles/
+build/

@@ -1,0 +1,41 @@
+changeset:   7:acf7499d0adb
+tag:         tip
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Sun Apr 25 00:30:03 2010 -0700
+summary:     It compiles. Are we happy now?
+
+changeset:   6:9d5a0da56b82
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Sat Apr 24 23:12:24 2010 -0700
+summary:     We will need to store buddy data at some point...
+
+changeset:   5:244ce7ff71fc
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Sat Apr 24 16:01:03 2010 -0700
+summary:     Stub all of these in an effort to get some compiling happening.
+
+changeset:   4:10b69487f7b8
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Tue Apr 20 18:29:56 2010 -0700
+summary:     Actually implement a barebones AuthClient.
+
+changeset:   3:ee0b0757308b
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Tue Apr 20 11:10:04 2010 -0700
+summary:     Start AuthSrv stuff.
+
+changeset:   2:a641649bd6c7
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Mon Apr 19 23:32:14 2010 -0700
+summary:     Start dealing with the libpurple side of things.
+
+changeset:   1:4d01f4e381b2
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Mon Apr 19 20:08:18 2010 -0700
+summary:     If we make it past the GateKeeper, we get to deal with the FileSrv.
+
+changeset:   0:d2a6cdf0ca07
+user:        Darryl Pogue <dvpdiner2@gmail.com>
+date:        Sun Apr 18 22:36:17 2010 -0700
+summary:     Moved from svn to hg.
+
