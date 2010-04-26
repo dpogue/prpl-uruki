@@ -20,7 +20,8 @@
 
 static gboolean file_build_callback(gpointer data) {
     kiClient* client = (kiClient*)data;
-    return client->file_build_callback();
+    client->file_build_callback();
+    return FALSE;
 }
 
 kiFileClient::kiFileClient(kiClient* master) {

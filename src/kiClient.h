@@ -48,8 +48,8 @@ public:
     void connect();
     void disconnect();
 
-    gboolean gate_file_callback();
-    gboolean file_build_callback();
+    void gate_file_callback();
+    void file_build_callback();
 
 private:
     std::list<hsUint32> fTransactions;

@@ -38,7 +38,8 @@ hsUbyte KEY_Gate_X[] = { 0xB3, 0x88, 0xFF, 0x0B, 0x90, 0x70, 0x2B, 0x2E,
 
 static gboolean gate_file_callback(gpointer data) {
     kiClient* client = (kiClient*)data;
-    return client->gate_file_callback();
+    client->gate_file_callback();
+    return FALSE;
 }
 
 kiGateClient::kiGateClient(kiClient* master) {
@@ -64,11 +65,11 @@ void kiGateClient::process() {
     fCondFile.wait();
     g_idle_add(gate_file_callback, fMaster);
 
-    fMaster->push(this->sendAuthSrvIpAddressRequest());
+/*    fMaster->push(this->sendAuthSrvIpAddressRequest());
     if (!this->isConnected()) {
         return;
     }
-    fCondAuth.wait();
+    fCondAuth.wait();*/
 }
 
 void kiGateClient::onFileSrvIpAddressReply(hsUint32 transId,

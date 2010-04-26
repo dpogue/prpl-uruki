@@ -191,6 +191,8 @@ void kiClient::pop(hsUint32 transID) {
 }
 
 void kiClient::connect() {
+	purple_connection_update_progress(fConnection, _("GateKeeper"), 1, 3);
+
     if (purple_proxy_connect(this, this->fAccount, this->fGateAddr,
              14617, this->fConnectFunc[kGate], this) == NULL) {
         purple_connection_error_reason(
@@ -216,28 +218,28 @@ void kiClient::disconnect() {
     }
 }
 
-gboolean kiClient::gate_file_callback() {
+void kiClient::gate_file_callback() {
+	purple_connection_update_progress(fConnection, _("FileSrv"), 1, 3);
+
     if (purple_proxy_connect(this, this->fAccount, this->fFileAddr,
              14617, this->fConnectFunc[kFile], this) == NULL) {
         purple_connection_error_reason(
                 purple_account_get_connection(this->fAccount),
                 PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
                 _("Unable to connect"));
-        return FALSE;
     }
-    return TRUE;
 }
 
-gboolean kiClient::file_build_callback() {
+void kiClient::file_build_callback() {
+	purple_connection_update_progress(fConnection, _("AuthSrv"), 1, 3);
+
     if (purple_proxy_connect(this, this->fAccount, this->fAuthAddr,
              14617, this->fConnectFunc[kAuth], this) == NULL) {
         purple_connection_error_reason(
                 purple_account_get_connection(this->fAccount),
                 PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
                 _("Unable to connect"));
-        return FALSE;
     }
-    return TRUE;
 }
 
 void kiClient::setAddress(ServType server, const plString address) {
