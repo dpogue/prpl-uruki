@@ -41,10 +41,16 @@ kiAuthClient::kiAuthClient(kiClient* master) {
     setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
+    fClientChallenge = (hsUint32)rand();
 }
 
 kiAuthClient::~kiAuthClient() {
     fMaster = NULL;
+}
+
+void kiAuthClient::setCredentials(plString username, plString password) {
+    fUsername = username;
+    fPassword = password;
 }
 
 void kiAuthClient::process() {
@@ -52,19 +58,26 @@ void kiAuthClient::process() {
         return;
     }
 
-    /*
-    fMaster->push(this->sendFileSrvIpAddressRequest(1));
+    this->sendClientRegisterRequest();
     if (!this->isConnected()) {
         return;
     }
-    fCondFile.wait();
-    g_idle_add(fMaster->auth_file_callback, NULL);
+    fCondChallenge.wait();
 
-    fMaster->push(this->sendAuthSrvIpAddressRequest(1));
+    fMaster->push(this->sendAcctLoginRequest(
+                fServerChallenge, fClientChallenge, fUsername, fPassword));
     if (!this->isConnected()) {
         return;
     }
-    fCondAuth.wait();
-    */
 }
 
+void kiAuthClient::onServerAddr(hsUint32 address, const plUuid& token) {
+    plDebug::Debug("Auth Server address %x; %s", address,
+            token.toString().cstr());
+}
+
+void kiAuthClient::onClientRegisterReply(hsUint32 serverChallenge) {
+    fServerChallenge = serverChallenge;
+    
+    fCondChallenge.signal();
+}

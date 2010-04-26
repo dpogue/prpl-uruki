@@ -35,6 +35,8 @@ static void gate_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
+    client->initClient(kiClient::kGate);
+
     if ((err = client->getClient(kiClient::kGate)->connect(fd))
             != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
@@ -74,6 +76,8 @@ static void file_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
+    client->initClient(kiClient::kFile);
+
     if ((err = client->getClient(kiClient::kFile)->connect(fd))
             != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
@@ -111,6 +115,11 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
         return;
     }
 
+    client->initClient(kiClient::kAuth);
+
+    ((kiAuthClient*)client->getClient(kiClient::kAuth))->setCredentials(
+        client->getUsername(), client->getPassword());
+
     if ((err = client->getClient(kiClient::kAuth)->connect(fd))
             != kNetSuccess) {
         tmp = g_strdup_printf(_("Unable to connect: %s"),
@@ -139,11 +148,7 @@ kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
     fAuthAddr = "184.73.198.22";
     fBuildID = 0;
 
-    fClients[kGate] = new kiGateClient(this);
-    fClients[kFile] = new kiFileClient(this);
-    fClients[kAuth] = new kiAuthClient(this);
-    fClients[kGame] = NULL; /* new kiGameClient(this); */
-
+    fClients = { NULL, NULL, NULL, NULL };
     fConnectFunc[kGate] = gate_connect;
     fConnectFunc[kFile] = file_connect;
     fConnectFunc[kAuth] = auth_connect;
@@ -261,6 +266,21 @@ void kiClient::setAddress(ServType server, const plString address) {
     }
 }
 
+void kiClient::initClient(ServType client) {
+    switch (client) {
+        case kGate:
+            fClients[kGate] = new kiGateClient(this);
+        case kAuth:
+            fClients[kAuth] = new kiAuthClient(this);
+        case kFile:
+            fClients[kFile] = new kiFileClient(this);
+        case kGame:
+            fClients[kGame] = NULL; /* new kiGameClient(this) */
+        default:
+            return;
+    }
+}
+
 pnClient* kiClient::getClient(ServType client) {
     switch (client) {
         case kGate:
@@ -289,18 +309,18 @@ void kiClient::killClient(ServType client) {
     fClients[client] = NULL;
 }
 
-const char* kiClient::getUsername() const {
+const plString kiClient::getUsername() const {
     const char* fullname = purple_account_get_username(fAccount);
     char** usersplits = g_strsplit(fullname, "/", 2);
     char* username = g_utf8_strdown(usersplits[0], -1);
 
     g_free(usersplits);
 
-    return username;
+    return plString(username);
 }
 
-const char* kiClient::getPassword() const {
-    return purple_connection_get_password(fConnection);
+const plString kiClient::getPassword() const {
+    return plString(purple_connection_get_password(fConnection));
 }
 
 const hsUint32 kiClient::getKINumber() const {

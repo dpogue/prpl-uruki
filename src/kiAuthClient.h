@@ -28,13 +28,21 @@ public:
     kiAuthClient(kiClient* master);
     virtual ~kiAuthClient();
 
+    void setCredentials(plString username, plString password);
     void process();
 
     //virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
+    virtual void onServerAddr(hsUint32 address, const plUuid& token);
+    virtual void onClientRegisterReply(hsUint32 serverChallenge);
 
 private:
     kiClient* fMaster;
-    hsThreadCondition fCond;
+    hsThreadCondition fCondChallenge;
+
+    hsUint32 fServerChallenge;
+    hsUint32 fClientChallenge;
+    plString fUsername;
+    plString fPassword;
 };
 
 #endif

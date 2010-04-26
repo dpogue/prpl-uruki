@@ -138,6 +138,10 @@ static PurplePluginInfo info =
 
 static void _init_plugin(PurplePlugin *plugin)
 {
+#ifdef DEBUG
+    plDebug::Init(plDebug::kDLAll);
+#endif
+
 	PurpleAccountUserSplit *split;
 
 	split = purple_account_user_split_new(_("KI Number"), "", '/');

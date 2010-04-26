@@ -69,6 +69,7 @@ private:
 public:
     void setAddress(ServType server, const plString address);
 
+    void initClient(ServType client);
     pnClient* getClient(ServType client);
     void killClient(ServType client);
 
@@ -78,8 +79,8 @@ public:
     PurpleAccount* getAccount() const { return fAccount; }
     PurpleConnection* getConnection() const { return fConnection; }
 
-    const char* getUsername() const;
-    const char* getPassword() const;
+    const plString getUsername() const;
+    const plString getPassword() const;
     const hsUint32 getKINumber() const;
 };
 
