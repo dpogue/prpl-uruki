@@ -36,16 +36,28 @@ hsUbyte KEY_Auth_X[] = { 0xF1, 0x80, 0x28, 0xB1, 0xAD, 0x66, 0xBB, 0xCB,
                          0x65, 0x21, 0x29, 0x45, 0x04, 0xC8, 0x58, 0xE9,
                          0x50, 0xB6, 0xC9, 0x25, 0x74, 0x80, 0x6D, 0x47 };
 
+static gboolean auth_timeout(gpointer data) {
+    kiClient* cli = (kiClient*)data;
+    cli->set_error(kiClient::kAuth, kNetErrTimeout);
+
+    return FALSE;
+}
+
 kiAuthClient::kiAuthClient(kiClient* master) {
     setKeys(KEY_Auth_X, KEY_Auth_N);
     setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
     fClientChallenge = (hsUint32)rand();
+    fTimeout = 0;
 }
 
 kiAuthClient::~kiAuthClient() {
     fMaster = NULL;
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
 }
 
 void kiAuthClient::setCredentials(plString username, plString password) {
@@ -57,6 +69,7 @@ void kiAuthClient::process() {
     if (!this->isConnected()) {
         return;
     }
+    this->ping();
 
     this->sendClientRegisterRequest();
     if (!this->isConnected()) {
@@ -69,6 +82,21 @@ void kiAuthClient::process() {
     if (!this->isConnected()) {
         return;
     }
+}
+
+void kiAuthClient::ping() {
+    if (fTimeout == 0) {
+        fMaster->push(this->sendPingRequest(0));
+        fTimeout = g_timeout_add_seconds(KI_TIMEOUT, auth_timeout, fMaster);
+    }
+}
+
+void kiAuthClient::onPingReply(hsUint32 transId, hsUint32 pingTimeMs) {
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
+    fMaster->pop(transId);
 }
 
 void kiAuthClient::onServerAddr(hsUint32 address, const plUuid& token) {

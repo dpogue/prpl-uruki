@@ -31,25 +31,33 @@ struct kiVaultBuddy {
 
 class kiClient {
 public:
-    enum ServType {
+    enum CliType {
         kGate,
         kAuth,
         kFile,
         kGame,
-        kNumServers
+        kNumClients
     };
 
     kiClient(PurpleConnection* pc, PurpleAccount* account);
     virtual ~kiClient();
 
+    /* Transaction Methods */
     void push(hsUint32 transID);
     void pop(hsUint32 transID);
 
+    /* Client Methods */
     void connect();
     void disconnect();
+    void ping();
 
+    /* Callbacks */
     void gate_file_callback();
     void file_build_callback();
+
+    /* Error Handling */
+    void set_error(PurpleConnectionError e, const char* msg);
+    void set_error(CliType client, ENetError e);
 
 private:
     std::list<hsUint32> fTransactions;
@@ -58,20 +66,17 @@ private:
     PurpleAccount* fAccount;
     PurpleConnection* fConnection;
     std::map<hsUint32, kiVaultBuddy> fBuddies;
-    plString fGateAddr;
-    plString fAuthAddr;
-    plString fFileAddr;
-    plString fGameAddr;
-    pnClient* fClients[kNumServers];
-    PurpleProxyConnectFunction fConnectFunc[kNumServers];
+    plString fAddresses[kNumClients];
+    pnClient* fClients[kNumClients];
+    PurpleProxyConnectFunction fConnectFunc[kNumClients];
     hsUint32 fBuildID;
 
 public:
-    void setAddress(ServType server, const plString address);
+    void setAddress(CliType client, const plString address);
 
-    void initClient(ServType client);
-    pnClient* getClient(ServType client);
-    void killClient(ServType client);
+    void initClient(CliType client);
+    pnClient* getClient(CliType client) const;
+    void killClient(CliType client);
 
     hsUint32 getBuildID() const { return fBuildID; }
     void setBuildID(const hsUint32 buildID) { fBuildID = buildID; }

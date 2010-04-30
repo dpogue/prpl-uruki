@@ -30,14 +30,16 @@ public:
 
     void setCredentials(plString username, plString password);
     void process();
+    void ping();
 
-    //virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
+    virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
     virtual void onServerAddr(hsUint32 address, const plUuid& token);
     virtual void onClientRegisterReply(hsUint32 serverChallenge);
 
 private:
     kiClient* fMaster;
     hsThreadCondition fCondChallenge;
+    guint fTimeout;
 
     hsUint32 fServerChallenge;
     hsUint32 fClientChallenge;

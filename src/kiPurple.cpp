@@ -117,8 +117,8 @@ void ki_unignore(PurpleConnection* pc, const char* name) {
 }
 
 void ki_keepalive(PurpleConnection* pc) {
-    /* TODO */
-    return;
+    kiClient* ki = (kiClient*)(pc->proto_data);
+    ki->ping();
 }
 
 const char* ki_normalise(const PurpleAccount* account, const char* who) {

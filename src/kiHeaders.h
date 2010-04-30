@@ -56,5 +56,6 @@
 #define KI_BRANCHID 1
 #define KI_BUILDTYPE 50
 #define KI_PORT 14617
+#define KI_TIMEOUT 181
 
 #endif

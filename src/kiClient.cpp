@@ -144,11 +144,10 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
 }
 
 kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
-    fGateAddr = "184.73.198.22";
-    fAuthAddr = "184.73.198.22";
     fBuildID = 0;
 
-    fClients = { NULL, NULL, NULL, NULL };
+    fAddresses[kGate] = "184.73.198.22";
+    fAddresses[kAuth] = "184.73.198.22";
     fConnectFunc[kGate] = gate_connect;
     fConnectFunc[kFile] = file_connect;
     fConnectFunc[kAuth] = auth_connect;
@@ -160,7 +159,7 @@ kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
 
 kiClient::~kiClient() {
     int i = 0;
-    for (i = 0; i < kNumServers; i++) {
+    for (i = 0; i < kNumClients; i++) {
         pnClient* cli = fClients[i];
         if (cli == NULL) {
             continue;
@@ -198,13 +197,10 @@ void kiClient::pop(hsUint32 transID) {
 void kiClient::connect() {
 	purple_connection_update_progress(fConnection, _("GateKeeper"), 1, 3);
 
-    if (purple_proxy_connect(this, this->fAccount, this->fGateAddr,
+    if (purple_proxy_connect(this, this->fAccount, this->fAddresses[kGate],
              14617, this->fConnectFunc[kGate], this) == NULL) {
-        purple_connection_error_reason(
-                purple_account_get_connection(this->fAccount),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
-                _("Unable to connect"));
-        return;
+        this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
+                _("Unable to connect."));
     }
 }
 
@@ -223,50 +219,61 @@ void kiClient::disconnect() {
     }
 }
 
+void kiClient::ping() {
+    if (fClients[kAuth] != NULL && fClients[kAuth]->isConnected()) {
+        ((kiAuthClient*)fClients[kAuth])->ping();
+    }
+}
+
 void kiClient::gate_file_callback() {
 	purple_connection_update_progress(fConnection, _("FileSrv"), 1, 3);
 
-    if (purple_proxy_connect(this, this->fAccount, this->fFileAddr,
-             14617, this->fConnectFunc[kFile], this) == NULL) {
-        purple_connection_error_reason(
-                purple_account_get_connection(this->fAccount),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
-                _("Unable to connect"));
+    if (purple_proxy_connect(this, fAccount, fAddresses[kFile], 14617,
+                fConnectFunc[kFile], this) == NULL)
+    {
+        this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
+                _("Unable to connect."));
     }
 }
 
 void kiClient::file_build_callback() {
 	purple_connection_update_progress(fConnection, _("AuthSrv"), 1, 3);
 
-    if (purple_proxy_connect(this, this->fAccount, this->fAuthAddr,
-             14617, this->fConnectFunc[kAuth], this) == NULL) {
-        purple_connection_error_reason(
-                purple_account_get_connection(this->fAccount),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
-                _("Unable to connect"));
+    if (purple_proxy_connect(this, fAccount, fAddresses[kAuth], 14617,
+                fConnectFunc[kAuth], this) == NULL)
+    {
+        this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
+                _("Unable to connect."));
     }
 }
 
-void kiClient::setAddress(ServType server, const plString address) {
-    switch (server) {
+void kiClient::set_error(PurpleConnectionError e, const char* msg) {
+    purple_connection_error_reason(fConnection, e, msg);
+}
+
+void kiClient::set_error(CliType client, ENetError e) {
+}
+
+void kiClient::setAddress(CliType client, const plString address) {
+    switch (client) {
         case kGate:
-            fGateAddr = address;
+            fAddresses[kGate] = address;
             return;
         case kAuth:
-            fAuthAddr = address;
+            fAddresses[kAuth] = address;
             return;
         case kFile:
-            fFileAddr = address;
+            fAddresses[kFile] = address;
             return;
         case kGame:
-            fGameAddr = address;
+            fAddresses[kGame] = address;
             return;
         default:
             return;
     }
 }
 
-void kiClient::initClient(ServType client) {
+void kiClient::initClient(CliType client) {
     switch (client) {
         case kGate:
             fClients[kGate] = new kiGateClient(this);
@@ -281,7 +288,7 @@ void kiClient::initClient(ServType client) {
     }
 }
 
-pnClient* kiClient::getClient(ServType client) {
+pnClient* kiClient::getClient(CliType client) const {
     switch (client) {
         case kGate:
             return fClients[kGate];
@@ -296,7 +303,7 @@ pnClient* kiClient::getClient(ServType client) {
     }
 }
 
-void kiClient::killClient(ServType client) {
+void kiClient::killClient(CliType client) {
     if (client > kGame) {
         return;
     }
