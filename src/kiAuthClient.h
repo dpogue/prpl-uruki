@@ -21,7 +21,9 @@
 
 #include "kiHeaders.h"
 #include "kiClient.h"
-#include "auth/pnAuthClient.h"
+#include <auth/pnAuthClient.h>
+#include <auth/pnVaultNode.h>
+#include <auth/pnVaultNodeTypes.hpp>
 
 class kiAuthClient : public pnAuthClient {
 public:
@@ -44,9 +46,12 @@ public:
     virtual void onAcctSetPlayerReply(hsUint32 transId, ENetError result);
     virtual void onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
                     size_t count, const pnVaultNodeRef* refs);
+    virtual void onVaultNodeFetched(hsUint32 transId, ENetError result,
+                    const pnVaultNode& node);
 
 private:
     kiClient* fMaster;
+    hsMutex fVaultMutex;
     hsThreadCondition fCondChallenge;
     hsThreadCondition fCondPlayers;
     hsThreadCondition fCondActive;

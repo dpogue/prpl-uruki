@@ -21,7 +21,7 @@
 
 #include "kiHeaders.h"
 #include "kiClient.h"
-#include "file/pnFileClient.h"
+#include <file/pnFileClient.h>
 
 class kiFileClient : public pnFileClient {
 public:
@@ -35,12 +35,12 @@ public:
     virtual void onPingReply(hsUint32 pingTimeMs);
     virtual void onBuildIdReply(hsUint32 transId, ENetError result,
             hsUint32 buildId);
-    virtual void onManifestReply(hsUint32 transId, ENetError result,
+    /*virtual void onManifestReply(hsUint32 transId, ENetError result,
                     hsUint32 readerId, size_t numFiles,
                     const pnFileManifest* files);
     virtual void onFileDownloadReply(hsUint32 transId, ENetError result,
                     hsUint32 readerId, hsUint32 totalSize,
-                    size_t bufferSize, const hsUbyte* bufferData);
+                    size_t bufferSize, const hsUbyte* bufferData);*/
 
 private:
     kiClient* fMaster;

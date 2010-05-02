@@ -21,7 +21,7 @@
 
 #include "kiHeaders.h"
 #include "kiClient.h"
-#include "gate/pnGateKeeperClient.h"
+#include <gate/pnGateKeeperClient.h>
 
 class kiGateClient : public pnGateKeeperClient {
 public:

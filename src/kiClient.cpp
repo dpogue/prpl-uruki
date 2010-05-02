@@ -21,127 +21,7 @@
 #include "kiFileClient.h"
 #include "kiAuthClient.h"
 
-static void gate_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = (kiClient*)data;
-    gchar* tmp;
-    ENetError err;
-
-    if (fd < 0) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"), error);
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    client->initClient(kiClient::kGate);
-
-    if ((err = client->getClient(kiClient::kGate)->connect(fd))
-            != kNetSuccess) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"),
-                GetNetErrorString(err));
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    ((kiGateClient*)client->getClient(kiClient::kGate))->process();
-
-    if (!client->getClient(kiClient::kGate)->isConnected()) {
-        tmp = g_strdup_printf(_("Network Error: %s"), "GateKeeperSrv");
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    } else {
-        client->killClient(kiClient::kGate);
-    }
-}
-
-static void file_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = (kiClient*)data;
-    gchar* tmp;
-    ENetError err;
-
-    if (fd < 0) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"), error);
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    client->initClient(kiClient::kFile);
-
-    if ((err = client->getClient(kiClient::kFile)->connect(fd))
-            != kNetSuccess) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"),
-                GetNetErrorString(err));
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    ((kiFileClient*)client->getClient(kiClient::kFile))->process();
-
-    if (!client->getClient(kiClient::kFile)->isConnected()) {
-        tmp = g_strdup_printf(_("Network Error: %s"), "FileSrv");
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-}
-
-static void auth_connect(gpointer data, gint fd, const gchar* error) {
-    kiClient* client = (kiClient*)data;
-    gchar* tmp;
-    ENetError err;
-
-    if (fd < 0) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"), error);
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    client->initClient(kiClient::kAuth);
-
-    ((kiAuthClient*)client->getClient(kiClient::kAuth))->setCredentials(
-        client->getUsername(), client->getPassword());
-
-    if ((err = client->getClient(kiClient::kAuth)->connect(fd))
-            != kNetSuccess) {
-        tmp = g_strdup_printf(_("Unable to connect: %s"),
-                GetNetErrorString(err));
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-
-    ((kiAuthClient*)client->getClient(kiClient::kAuth))->process();
-
-    if (!client->getClient(kiClient::kAuth)->isConnected()) {
-        tmp = g_strdup_printf(_("Network Error: %s"), "AuthSrv");
-        purple_connection_error_reason(
-                purple_account_get_connection(client->getAccount()),
-                PURPLE_CONNECTION_ERROR_NETWORK_ERROR, tmp);
-        g_free(tmp);
-        return;
-    }
-}
+#include "kiClient_cb.cpp"
 
 kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
     fBuildID = 0;
@@ -195,10 +75,11 @@ void kiClient::pop(hsUint32 transID) {
 }
 
 void kiClient::connect() {
-	purple_connection_update_progress(fConnection, _("GateKeeper"), 1, 3);
+	purple_connection_update_progress(fConnection, _("GateKeeper"), 0, 3);
 
-    if (purple_proxy_connect(this, this->fAccount, this->fAddresses[kGate],
-             14617, this->fConnectFunc[kGate], this) == NULL) {
+    if (purple_proxy_connect(this, fAccount, fAddresses[kGate], KI_PORT,
+                fConnectFunc[kGate], this) == NULL)
+    {
         this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
                 _("Unable to connect."));
     }
@@ -228,10 +109,26 @@ void kiClient::ping() {
     }
 }
 
+void kiClient::update_buddy(pnVaultPlayerInfoNode* node) {
+    kiVaultBuddy* buddy = new kiVaultBuddy();
+
+    buddy->fPlayerKI = node->getPlayerId();
+    buddy->fPlayerName = node->getPlayerName();
+    buddy->fLocation = node->getAgeInstName();
+    buddy->fOnline = node->getOnline();
+
+    fBuddies[node->getNodeIdx()] = buddy;
+
+    clo_Buddy* closure = new clo_Buddy();
+    closure->client = this;
+    closure->buddy = buddy;
+    g_idle_add(ki_update_buddy, closure);
+}
+
 void kiClient::gate_file_callback() {
 	purple_connection_update_progress(fConnection, _("FileSrv"), 1, 3);
 
-    if (purple_proxy_connect(this, fAccount, fAddresses[kFile], 14617,
+    if (purple_proxy_connect(this, fAccount, fAddresses[kFile], KI_PORT,
                 fConnectFunc[kFile], this) == NULL)
     {
         this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,
@@ -240,9 +137,9 @@ void kiClient::gate_file_callback() {
 }
 
 void kiClient::file_build_callback() {
-	purple_connection_update_progress(fConnection, _("AuthSrv"), 1, 3);
+	purple_connection_update_progress(fConnection, _("AuthSrv"), 2, 3);
 
-    if (purple_proxy_connect(this, fAccount, fAddresses[kAuth], 14617,
+    if (purple_proxy_connect(this, fAccount, fAddresses[kAuth], KI_PORT,
                 fConnectFunc[kAuth], this) == NULL)
     {
         this->set_error(PURPLE_CONNECTION_ERROR_NETWORK_ERROR,

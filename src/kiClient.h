@@ -20,6 +20,7 @@
 #define _KI_CLIENT_H
 
 #include "kiHeaders.h"
+#include <auth/pnVaultNodeTypes.hpp>
 #include <list>
 #include <map>
 
@@ -51,6 +52,7 @@ public:
     void connect();
     void disconnect();
     void ping();
+    void update_buddy(pnVaultPlayerInfoNode* node);
 
     /* Callbacks */
     void gate_file_callback();
@@ -66,7 +68,7 @@ private:
 
     PurpleAccount* fAccount;
     PurpleConnection* fConnection;
-    std::map<hsUint32, kiVaultBuddy> fBuddies;
+    std::map<hsUint32, kiVaultBuddy*> fBuddies;
     plString fAddresses[kNumClients];
     pnClient* fClients[kNumClients];
     PurpleProxyConnectFunction fConnectFunc[kNumClients];

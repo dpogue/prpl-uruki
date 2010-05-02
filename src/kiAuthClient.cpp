@@ -43,6 +43,13 @@ static gboolean auth_timeout(gpointer data) {
     return FALSE;
 }
 
+static gboolean auth_setactive(gpointer data) {
+    kiClient* cli = (kiClient*)data;
+    purple_connection_set_state(cli->getConnection(), PURPLE_CONNECTED);
+
+    return FALSE;
+}
+
 kiAuthClient::kiAuthClient(kiClient* master) {
     setKeys(KEY_Auth_X, KEY_Auth_N);
     setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
@@ -90,10 +97,10 @@ void kiAuthClient::process() {
     if (!this->isConnected()) return;
     fCondActive.wait();
 
+    g_idle_add(auth_setactive, fMaster);
+
     fMaster->push(this->sendVaultFetchNodeRefs(fPlayerID));
     if (!this->isConnected()) return;
-
-    /* Get Vault nodes and buddies */
 }
 
 void kiAuthClient::ping() {
@@ -123,24 +130,24 @@ void kiAuthClient::onClientRegisterReply(hsUint32 serverChallenge) {
 }
 
 void kiAuthClient::onAcctLoginReply(hsUint32 transId, ENetError result,
-                const plUuid& acctUuid, hsUint32 acctFlags,
-                hsUint32 billingType, const hsUint32* encryptionKey) {
+        const plUuid& acctUuid, hsUint32 acctFlags, hsUint32 billingType,
+        const hsUint32* encryptionKey) {
+    fMaster->pop(transId);
+
     if (result != kNetSuccess) {
         fCondPlayers.signal();
         fMaster->set_error(kiClient::kAuth, result);
-        fMaster->pop(transId);
         return;
     }
 
     fAccountUuid = acctUuid;
 
-    fMaster->pop(transId);
     fCondPlayers.signal();
 }
 
 void kiAuthClient::onAcctPlayerInfo(hsUint32 transId, hsUint32 playerId,
-                const plString& playerName, const plString& avatarModel,
-                hsUint32 explorer) {
+        const plString& playerName, const plString& avatarModel,
+        hsUint32 explorer) {
     if (explorer && playerId == fPlayerID) {
         fPlayerName = playerName;
         fPlayerModel = avatarModel;
@@ -156,13 +163,16 @@ void kiAuthClient::onAcctSetPlayerReply(hsUint32 transId, ENetError result) {
     }
 }
 
-void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
-                size_t count, const pnVaultNodeRef* refs) {
+void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId,
+        ENetError result, size_t count, const pnVaultNodeRef* refs) {
+    fMaster->pop(transId);
+
     if (result != kNetSuccess) {
         fMaster->set_error(kiClient::kAuth, result);
         return;
     }
 
+    fVaultMutex.lock();
     for (size_t i = 0; i < count; i++) {
         fRefs[refs[i].fParent].push_back(refs[i].fChild);
     }
@@ -170,6 +180,49 @@ void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
     /* Fetch all direct children of the PlayerNode */
     std::list<hsUint32>::iterator i;
     for (i = fRefs[fPlayerID].begin(); i != fRefs[fPlayerID].end(); i++) {
-        this->sendVaultNodeFetch(*i);
+        fMaster->push(this->sendVaultNodeFetch(*i));
     }
+    fVaultMutex.unlock();
+}
+
+void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
+        const pnVaultNode& node) {
+    fMaster->pop(transId);
+
+    if (result != kNetSuccess) {
+        fMaster->set_error(kiClient::kAuth, result);
+        return;
+    }
+
+    fVaultMutex.lock();
+    pnVaultNode tnode = node;
+    if (pnVaultPlayerInfoListNode::Convert(&tnode) != NULL) {
+        pnVaultPlayerInfoListNode* vnode;
+        vnode = pnVaultPlayerInfoListNode::Convert(&tnode);
+        hsUint32 idx = vnode->getNodeIdx();
+        std::list<hsUint32>::iterator i;
+
+        switch (vnode->getFolderType()) {
+            case (plVault::kBuddyListFolder):
+                for (i = fRefs[idx].begin(); i != fRefs[idx].end(); i++) {
+                    fMaster->push(this->sendVaultNodeFetch(*i));
+                }
+                break;
+            case (plVault::kIgnoreListFolder):
+                /* TODO */
+                break;
+            default:
+                break;
+        }
+    } else if (pnVaultPlayerInfoNode::Convert(&tnode) != NULL) {
+        pnVaultPlayerInfoNode* vnode;
+        vnode = pnVaultPlayerInfoNode::Convert(&tnode);
+
+        if (vnode->getPlayerId() == fPlayerID) {
+            /* TODO: We should mark ourselves online at some point */
+        } else {
+            fMaster->update_buddy(vnode);
+        }
+    }
+    fVaultMutex.unlock();
 }

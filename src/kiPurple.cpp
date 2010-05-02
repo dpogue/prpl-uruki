@@ -33,16 +33,23 @@ GList* ki_status_types(PurpleAccount* account) {
 	
 	g_return_val_if_fail(account != NULL, NULL);
 	
-	status = purple_status_type_new(
-            PURPLE_STATUS_AVAILABLE, NULL, NULL, TRUE);
+	status = purple_status_type_new_with_attrs(
+            PURPLE_STATUS_AVAILABLE,
+            "online", NULL, TRUE, TRUE, FALSE,
+            "location", _("Location"),
+            purple_value_new(PURPLE_TYPE_STRING), NULL);
 	types = g_list_prepend(types, status);
 	
-	status = purple_status_type_new(
-            PURPLE_STATUS_AWAY, NULL, NULL, TRUE);
+	status = purple_status_type_new_with_attrs(
+            PURPLE_STATUS_AWAY,
+            "away", NULL, TRUE, TRUE, FALSE,
+            "location", _("Location"),
+            purple_value_new(PURPLE_TYPE_STRING), NULL);
 	types = g_list_prepend(types, status);
 	
-	status = purple_status_type_new(
-            PURPLE_STATUS_OFFLINE, NULL, NULL, TRUE);
+	status = purple_status_type_new_full(
+            PURPLE_STATUS_OFFLINE,
+            "offline", NULL, TRUE, TRUE, FALSE);
 	types = g_list_prepend(types, status);
 	
 	return types;
