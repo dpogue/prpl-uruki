@@ -29,8 +29,9 @@ public:
     virtual ~kiGateClient();
 
     void process();
+    void ping();
 
-    //virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
+    virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
     virtual void onFileSrvIpAddressReply(hsUint32 transId,
             const plString& addr);
     virtual void onAuthSrvIpAddressReply(hsUint32 transId,
@@ -40,6 +41,7 @@ private:
     kiClient* fMaster;
     hsThreadCondition fCondFile;
     hsThreadCondition fCondAuth;
+    guint fTimeout;
 };
 
 #endif

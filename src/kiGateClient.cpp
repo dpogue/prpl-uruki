@@ -36,6 +36,13 @@ hsUbyte KEY_Gate_X[] = { 0xB3, 0x88, 0xFF, 0x0B, 0x90, 0x70, 0x2B, 0x2E,
                          0x68, 0x82, 0x32, 0xC5, 0x89, 0x94, 0xF9, 0xCA,
                          0x69, 0x69, 0xD0, 0x60, 0x19, 0xB7, 0xF3, 0x1A };
 
+static gboolean gate_timeout(gpointer data) {
+    kiClient* cli = (kiClient*)data;
+    cli->set_error(kiClient::kGate, kNetErrTimeout);
+
+    return FALSE;
+}
+
 static gboolean gate_file_callback(gpointer data) {
     kiClient* client = (kiClient*)data;
     client->gate_file_callback();
@@ -47,29 +54,44 @@ kiGateClient::kiGateClient(kiClient* master) {
     setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
+    fTimeout = 0;
 }
 
 kiGateClient::~kiGateClient() {
     fMaster = NULL;
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
 }
 
 void kiGateClient::process() {
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
+    this->ping();
 
     fMaster->push(this->sendFileSrvIpAddressRequest(1));
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
     fCondFile.wait();
     g_idle_add(gate_file_callback, fMaster);
 
 /*    fMaster->push(this->sendAuthSrvIpAddressRequest());
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
     fCondAuth.wait();*/
+}
+
+void kiGateClient::ping() {
+    if (fTimeout == 0) {
+        fMaster->push(this->sendPingRequest(0));
+        fTimeout = g_timeout_add_seconds(KI_TIMEOUT, gate_timeout, fMaster);
+    }
+}
+
+void kiGateClient::onPingReply(hsUint32 transId, hsUint32 pingTimeMs) {
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
+    fMaster->pop(transId);
 }
 
 void kiGateClient::onFileSrvIpAddressReply(hsUint32 transId,

@@ -21,6 +21,7 @@
 
 #include "kiHeaders.h"
 #include <list>
+#include <map>
 
 struct kiVaultBuddy {
     hsUint32 fPlayerKI;
@@ -70,6 +71,7 @@ private:
     pnClient* fClients[kNumClients];
     PurpleProxyConnectFunction fConnectFunc[kNumClients];
     hsUint32 fBuildID;
+    plKey fAvatarKey;
 
 public:
     void setAddress(CliType client, const plString address);
@@ -83,6 +85,10 @@ public:
 
     PurpleAccount* getAccount() const { return fAccount; }
     PurpleConnection* getConnection() const { return fConnection; }
+
+    void requestKey(plString name);
+    plKey getKey() const { return fAvatarKey; }
+    void setKey(const plKey key) { fAvatarKey = key; }
 
     const plString getUsername() const;
     const plString getPassword() const;

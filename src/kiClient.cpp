@@ -220,6 +220,9 @@ void kiClient::disconnect() {
 }
 
 void kiClient::ping() {
+    if (fClients[kFile] != NULL && fClients[kFile]->isConnected()) {
+        ((kiFileClient*)fClients[kFile])->ping();
+    }
     if (fClients[kAuth] != NULL && fClients[kAuth]->isConnected()) {
         ((kiAuthClient*)fClients[kAuth])->ping();
     }
@@ -252,6 +255,7 @@ void kiClient::set_error(PurpleConnectionError e, const char* msg) {
 }
 
 void kiClient::set_error(CliType client, ENetError e) {
+    /* This MUST call set_error (above) using g_idle_add!!! */
 }
 
 void kiClient::setAddress(CliType client, const plString address) {
@@ -314,6 +318,20 @@ void kiClient::killClient(CliType client) {
     }
     delete cli;
     fClients[client] = NULL;
+}
+
+void kiClient::requestKey(plString name) {
+    plString filename;
+
+    if (!fClients[kFile]->isConnected()) {
+        this->set_error(kFile, kNetErrDisconnected);
+    }
+
+    if (!name.compareTo("male", TRUE) || !name.compareTo("female", TRUE)) {
+        filename = "GlobalAvatars";
+    } else {
+        filename = "CustomAvatars";
+    }
 }
 
 const plString kiClient::getUsername() const {

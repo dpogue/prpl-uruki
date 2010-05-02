@@ -18,6 +18,13 @@
 
 #include "kiFileClient.h"
 
+static gboolean file_timeout(gpointer data) {
+    kiClient* cli = (kiClient*)data;
+    cli->set_error(kiClient::kFile, kNetErrTimeout);
+
+    return FALSE;
+}
+
 static gboolean file_build_callback(gpointer data) {
     kiClient* client = (kiClient*)data;
     client->file_build_callback();
@@ -28,23 +35,45 @@ kiFileClient::kiFileClient(kiClient* master) {
     setClientInfo(KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
     fMaster = master;
+    fTimeout = 0;
 }
 
 kiFileClient::~kiFileClient() {
     fMaster = NULL;
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
 }
 
 void kiFileClient::process() {
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
+    this->ping();
 
     fMaster->push(this->sendBuildIdRequest());
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
     fCondBuildId.wait();
     g_idle_add(file_build_callback, fMaster);
+}
+
+void kiFileClient::ping() {
+    if (fTimeout == 0) {
+        this->sendPingRequest(0);
+        fTimeout = g_timeout_add_seconds(KI_TIMEOUT, file_timeout, fMaster);
+    }
+}
+
+void kiFileClient::request(const plString age, const plString page) {
+    fPagename = page;
+
+    fMaster->push(this->sendManifestRequest(age, 0));
+}
+
+void kiFileClient::onPingReply(hsUint32 pingTimeMs) {
+    if (fTimeout != 0) {
+        g_source_remove(fTimeout);
+        fTimeout = 0;
+    }
 }
 
 void kiFileClient::onBuildIdReply(hsUint32 transId, ENetError result,

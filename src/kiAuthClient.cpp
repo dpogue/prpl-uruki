@@ -50,6 +50,7 @@ kiAuthClient::kiAuthClient(kiClient* master) {
     fMaster = master;
     fClientChallenge = (hsUint32)rand();
     fTimeout = 0;
+    fPlayerId = master->getKINumber();
 }
 
 kiAuthClient::~kiAuthClient() {
@@ -66,22 +67,33 @@ void kiAuthClient::setCredentials(plString username, plString password) {
 }
 
 void kiAuthClient::process() {
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
     this->ping();
 
     this->sendClientRegisterRequest();
-    if (!this->isConnected()) {
-        return;
-    }
+    if (!this->isConnected()) return;
     fCondChallenge.wait();
 
     fMaster->push(this->sendAcctLoginRequest(
-                fServerChallenge, fClientChallenge, fUsername, fPassword));
-    if (!this->isConnected()) {
+                fServerChallenge, fClientChallenge, fUsername, fPassword,
+                "", "linux"));
+    if (!this->isConnected()) return;
+    fCondPlayers.wait();
+
+    if (fAccountUuid.isNull()) return;
+    if (fPlayerName.empty()) {
+        fMaster->set_error(kiClient::kAuth, kNetErrPlayerNotFound);
         return;
     }
+
+    fMaster->push(this->sendAcctSetPlayerRequest(fPlayerId));
+    if (!this->isConnected()) return;
+    fCondActive.wait();
+
+    fMaster->push(this->sendVaultFetchNodeRefs(fPlayerId));
+    if (!this->isConnected()) return;
+
+    /* Get Vault nodes and buddies */
 }
 
 void kiAuthClient::ping() {
@@ -108,4 +120,56 @@ void kiAuthClient::onClientRegisterReply(hsUint32 serverChallenge) {
     fServerChallenge = serverChallenge;
     
     fCondChallenge.signal();
+}
+
+void kiAuthClient::onAcctLoginReply(hsUint32 transId, ENetError result,
+                const plUuid& acctUuid, hsUint32 acctFlags,
+                hsUint32 billingType, const hsUint32* encryptionKey) {
+    if (result != kNetSuccess) {
+        fCondPlayers.signal();
+        fMaster->setError(kiClient::kAuth, result);
+        fMaster->pop(transId);
+        return;
+    }
+
+    fAccountUuid = acctUuid;
+
+    fMaster->pop(transId);
+    fCondPlayers.signal();
+}
+
+void kiAuthClient::onAcctPlayerInfo(hsUint32 transId, hsUint32 playerId,
+                const plString& playerName, const plString& avatarModel,
+                hsUint32 explorer) {
+    if (explorer && playerId == fPlayerId) {
+        fPlayerName = playerName;
+        fPlayerModel = avatarModel;
+    }
+}
+
+void kiAuthClient::onAcctSetPlayerReply(hsUint32 transId, ENetError result) {
+    fMaster->pop(transId);
+    fCondActive.signal();
+
+    if (result != kNetSuccess) {
+        fMaster->setError(kiClient::kAuth, result);
+    }
+}
+
+void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
+                size_t count, const pnVaultNodeRef* refs) {
+    if (result != kNetSuccess) {
+        fMaster->setError(kiClient::kAuth, result);
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        fRefs[refs[i].fParent].push_back(refs[i].fChild);
+    }
+
+    /* Fetch all direct children of the PlayerNode */
+    std::list<hsUint32>::iterator i;
+    for (i = fRefs[fPlayerId].begin(); i != fRefs[fPlayerId].end(); i++) {
+        this->sendVaultNodeFetch(i);
+    }
 }

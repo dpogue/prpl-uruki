@@ -35,16 +35,32 @@ public:
     virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
     virtual void onServerAddr(hsUint32 address, const plUuid& token);
     virtual void onClientRegisterReply(hsUint32 serverChallenge);
+    virtual void onAcctLoginReply(hsUint32 transId, ENetError result,
+                    const plUuid& acctUuid, hsUint32 acctFlags,
+                    hsUint32 billingType, const hsUint32* encryptionKey);
+    virtual void onAcctPlayerInfo(hsUint32 transId, hsUint32 playerId,
+                    const plString& playerName, const plString& avatarModel,
+                    hsUint32 explorer);
+    virtual void onAcctSetPlayerReply(hsUint32 transId, ENetError result);
+    virtual void onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
+                    size_t count, const pnVaultNodeRef* refs);
 
 private:
     kiClient* fMaster;
     hsThreadCondition fCondChallenge;
+    hsThreadCondition fCondPlayers;
+    hsThreadCondition fCondActive;
     guint fTimeout;
 
     hsUint32 fServerChallenge;
     hsUint32 fClientChallenge;
     plString fUsername;
     plString fPassword;
+    hsUint32 fPlayerID;
+    plString fPlayerName;
+    plString fPlayerModel;
+    plUuid fAccountUuid;
+    std::map<hsUint32, std::list<hsUint32> > fRefs;
 };
 
 #endif

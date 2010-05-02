@@ -29,14 +29,25 @@ public:
     virtual ~kiFileClient();
 
     void process();
+    void ping();
+    void request(const plString age, const plString page);
 
-    //virtual void onPingReply(hsUint32 transId, hsUint32 pingTimeMs);
+    virtual void onPingReply(hsUint32 pingTimeMs);
     virtual void onBuildIdReply(hsUint32 transId, ENetError result,
             hsUint32 buildId);
+    virtual void onManifestReply(hsUint32 transId, ENetError result,
+                    hsUint32 readerId, size_t numFiles,
+                    const pnFileManifest* files);
+    virtual void onFileDownloadReply(hsUint32 transId, ENetError result,
+                    hsUint32 readerId, hsUint32 totalSize,
+                    size_t bufferSize, const hsUbyte* bufferData);
 
 private:
     kiClient* fMaster;
     hsThreadCondition fCondBuildId;
+    guint fTimeout;
+
+    plString fPagename;
 };
 
 #endif
