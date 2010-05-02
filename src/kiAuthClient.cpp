@@ -50,7 +50,7 @@ kiAuthClient::kiAuthClient(kiClient* master) {
     fMaster = master;
     fClientChallenge = (hsUint32)rand();
     fTimeout = 0;
-    fPlayerId = master->getKINumber();
+    fPlayerID = master->getKINumber();
 }
 
 kiAuthClient::~kiAuthClient() {
@@ -86,11 +86,11 @@ void kiAuthClient::process() {
         return;
     }
 
-    fMaster->push(this->sendAcctSetPlayerRequest(fPlayerId));
+    fMaster->push(this->sendAcctSetPlayerRequest(fPlayerID));
     if (!this->isConnected()) return;
     fCondActive.wait();
 
-    fMaster->push(this->sendVaultFetchNodeRefs(fPlayerId));
+    fMaster->push(this->sendVaultFetchNodeRefs(fPlayerID));
     if (!this->isConnected()) return;
 
     /* Get Vault nodes and buddies */
@@ -127,7 +127,7 @@ void kiAuthClient::onAcctLoginReply(hsUint32 transId, ENetError result,
                 hsUint32 billingType, const hsUint32* encryptionKey) {
     if (result != kNetSuccess) {
         fCondPlayers.signal();
-        fMaster->setError(kiClient::kAuth, result);
+        fMaster->set_error(kiClient::kAuth, result);
         fMaster->pop(transId);
         return;
     }
@@ -141,7 +141,7 @@ void kiAuthClient::onAcctLoginReply(hsUint32 transId, ENetError result,
 void kiAuthClient::onAcctPlayerInfo(hsUint32 transId, hsUint32 playerId,
                 const plString& playerName, const plString& avatarModel,
                 hsUint32 explorer) {
-    if (explorer && playerId == fPlayerId) {
+    if (explorer && playerId == fPlayerID) {
         fPlayerName = playerName;
         fPlayerModel = avatarModel;
     }
@@ -152,14 +152,14 @@ void kiAuthClient::onAcctSetPlayerReply(hsUint32 transId, ENetError result) {
     fCondActive.signal();
 
     if (result != kNetSuccess) {
-        fMaster->setError(kiClient::kAuth, result);
+        fMaster->set_error(kiClient::kAuth, result);
     }
 }
 
 void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
                 size_t count, const pnVaultNodeRef* refs) {
     if (result != kNetSuccess) {
-        fMaster->setError(kiClient::kAuth, result);
+        fMaster->set_error(kiClient::kAuth, result);
         return;
     }
 
@@ -169,7 +169,7 @@ void kiAuthClient::onVaultNodeRefsFetched(hsUint32 transId, ENetError result,
 
     /* Fetch all direct children of the PlayerNode */
     std::list<hsUint32>::iterator i;
-    for (i = fRefs[fPlayerId].begin(); i != fRefs[fPlayerId].end(); i++) {
-        this->sendVaultNodeFetch(i);
+    for (i = fRefs[fPlayerID].begin(); i != fRefs[fPlayerID].end(); i++) {
+        this->sendVaultNodeFetch(*i);
     }
 }
