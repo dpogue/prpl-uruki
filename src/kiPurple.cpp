@@ -23,8 +23,26 @@ const char* ki_list_icon(PurpleAccount* account, PurpleBuddy* buddy) {
 }
 
 char* ki_status_text(PurpleBuddy* buddy) {
-    /* TODO */
-    return NULL;
+	const PurplePresence *presence;
+	const PurpleStatus *status;
+	const char *location;
+	char *ret = NULL;
+
+	presence = purple_buddy_get_presence(buddy);
+	status = purple_presence_get_active_status(presence);
+
+	location = purple_status_get_attr_string(status, "location");
+
+	if (location != NULL) {
+        ret = g_strdup_printf("KI#%d : %s", purple_buddy_get_name(buddy),
+                g_markup_escape_text(location, -1));
+		purple_util_chrreplace(ret, '\n', ' ');
+
+	} else {
+        ret = g_strdup_printf("KI#%d", purple_buddy_get_name(buddy));
+    }
+
+	return ret;
 }
 
 GList* ki_status_types(PurpleAccount* account) {
@@ -33,18 +51,30 @@ GList* ki_status_types(PurpleAccount* account) {
 	
 	g_return_val_if_fail(account != NULL, NULL);
 	
+    /* Buddy status messages hold location information */
 	status = purple_status_type_new_with_attrs(
             PURPLE_STATUS_AVAILABLE,
-            "online", NULL, TRUE, TRUE, FALSE,
+            "b_online", NULL, FALSE, FALSE, FALSE,
             "location", _("Location"),
             purple_value_new(PURPLE_TYPE_STRING), NULL);
 	types = g_list_prepend(types, status);
 	
 	status = purple_status_type_new_with_attrs(
             PURPLE_STATUS_AWAY,
-            "away", NULL, TRUE, TRUE, FALSE,
+            "b_away", NULL, FALSE, FALSE, FALSE,
             "location", _("Location"),
             purple_value_new(PURPLE_TYPE_STRING), NULL);
+	types = g_list_prepend(types, status);
+
+	status = purple_status_type_new_full(
+            PURPLE_STATUS_OFFLINE,
+            "b_offline", NULL, FALSE, FALSE, FALSE);
+	types = g_list_prepend(types, status);
+
+    /* Our status is simply online or offline */
+	status = purple_status_type_new_full(
+            PURPLE_STATUS_AVAILABLE,
+            "online", NULL, TRUE, TRUE, FALSE);
 	types = g_list_prepend(types, status);
 	
 	status = purple_status_type_new_full(
