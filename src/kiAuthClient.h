@@ -26,6 +26,14 @@
 #include <auth/pnVaultNodeTypes.hpp>
 
 class kiAuthClient : public pnAuthClient {
+private:
+    enum Nodes {
+        kBuddyList,
+        kIgnoreList,
+        kHoodOwners,
+        kNumNodes
+    };
+
 public:
     kiAuthClient(kiClient* master);
     virtual ~kiAuthClient();
@@ -48,6 +56,8 @@ public:
                     size_t count, const pnVaultNodeRef* refs);
     virtual void onVaultNodeFetched(hsUint32 transId, ENetError result,
                     const pnVaultNode& node);
+    virtual void onVaultNodeChanged(hsUint32 nodeId, const plUuid& revisionId);
+    virtual void onVaultSaveNodeReply(hsUint32 transId, ENetError result);
 
 private:
     kiClient* fMaster;
@@ -66,6 +76,8 @@ private:
     plString fPlayerModel;
     plUuid fAccountUuid;
     std::map<hsUint32, std::list<hsUint32> > fRefs;
+    pnVaultPlayerInfoNode* fSelf;
+    hsUint32 fNodeIDs[kNumNodes];
 };
 
 #endif

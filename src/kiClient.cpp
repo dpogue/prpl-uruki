@@ -25,6 +25,7 @@
 
 kiClient::kiClient(PurpleConnection* pc, PurpleAccount* account) {
     fBuildID = 0;
+    fMgr = new plResManager(pvLive);
 
     fAddresses[kGate] = "184.73.198.22";
     fAddresses[kAuth] = "184.73.198.22";

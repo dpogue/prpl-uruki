@@ -38,6 +38,7 @@
 /* libHSPlasma headers */
 #include <Debug/plDebug.h>
 #include <pnClient.h>
+#include <ResManager/plResManager.h>
 #include <PRP/KeyedObject/plKey.h>
 
 /* libpurple headers */

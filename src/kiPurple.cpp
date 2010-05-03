@@ -34,12 +34,12 @@ char* ki_status_text(PurpleBuddy* buddy) {
 	location = purple_status_get_attr_string(status, "location");
 
 	if (location != NULL) {
-        ret = g_strdup_printf("KI#%d : %s", purple_buddy_get_name(buddy),
+        ret = g_strdup_printf("KI#%s : %s", purple_buddy_get_name(buddy),
                 g_markup_escape_text(location, -1));
 		purple_util_chrreplace(ret, '\n', ' ');
 
 	} else {
-        ret = g_strdup_printf("KI#%d", purple_buddy_get_name(buddy));
+        ret = g_strdup_printf("KI#%s", purple_buddy_get_name(buddy));
     }
 
 	return ret;

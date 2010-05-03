@@ -50,7 +50,8 @@ static gboolean auth_setactive(gpointer data) {
     return FALSE;
 }
 
-kiAuthClient::kiAuthClient(kiClient* master) {
+kiAuthClient::kiAuthClient(kiClient* master)
+    : pnAuthClient(master->getResManager()) {
     setKeys(KEY_Auth_X, KEY_Auth_N);
     setClientInfo(master->getBuildID(), KI_BUILDTYPE, KI_BRANCHID, KI_UUID);
 
@@ -61,6 +62,12 @@ kiAuthClient::kiAuthClient(kiClient* master) {
 }
 
 kiAuthClient::~kiAuthClient() {
+    if (fSelf != NULL) {
+        fSelf->setAgeInstName("");
+        fSelf->setOnline(0);
+        this->sendVaultNodeSave(fSelf->getNodeIdx(), plUuid(),
+                (const pnVaultNode&)*fSelf);
+    }
     fMaster = NULL;
     if (fTimeout != 0) {
         g_source_remove(fTimeout);
@@ -204,11 +211,13 @@ void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
 
         switch (vnode->getFolderType()) {
             case (plVault::kBuddyListFolder):
+                fNodeIDs[kBuddyList] = idx;
                 for (i = fRefs[idx].begin(); i != fRefs[idx].end(); i++) {
                     fMaster->push(this->sendVaultNodeFetch(*i));
                 }
                 break;
             case (plVault::kIgnoreListFolder):
+                fNodeIDs[kIgnoreList] = idx;
                 /* TODO */
                 break;
             default:
@@ -219,10 +228,50 @@ void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
         vnode = pnVaultPlayerInfoNode::Convert(&tnode);
 
         if (vnode->getPlayerId() == fPlayerID) {
-            /* TODO: We should mark ourselves online at some point */
+            fSelf = vnode;
+            vnode->setOnline(1);
+            vnode->setAgeInstName("D'ni-Riltagamin");
+            fMaster->push(this->sendVaultNodeSave(vnode->getNodeIdx(), 
+                        plUuid(), (const pnVaultNode&)*vnode));
         } else {
-            fMaster->update_buddy(vnode);
+            /* Hacks to only add buddies -_- */
+            hsUint32 bl = fNodeIDs[kBuddyList];
+            std::list<hsUint32>::iterator i;
+            for (i = fRefs[bl].begin(); i != fRefs[bl].end(); i++) {
+                if (vnode->getNodeIdx() == *i) {
+                    fMaster->update_buddy(vnode);
+                }
+            }
         }
     }
     fVaultMutex.unlock();
+}
+
+void kiAuthClient::onVaultNodeChanged(hsUint32 nodeId,
+        const plUuid& revisionId) {
+    if (fNodeIDs[kBuddyList] != 0) {
+        std::list<hsUint32>::iterator i;
+        for (i = fRefs[fNodeIDs[kBuddyList]].begin();
+             i != fRefs[fNodeIDs[kBuddyList]].end();
+             i++)
+        {
+            if (nodeId == *i) {
+                fMaster->push(this->sendVaultNodeFetch(*i));
+                return;
+            }
+        }
+    }
+    if (fNodeIDs[kIgnoreList] != 0) {
+        /* TODO */
+    }
+}
+
+void kiAuthClient::onVaultSaveNodeReply(hsUint32 transId,
+        ENetError result) {
+    fMaster->pop(transId);
+
+    if (result != kNetSuccess) {
+        fMaster->set_error(kiClient::kAuth, result);
+        return;
+    }
 }

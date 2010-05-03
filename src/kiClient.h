@@ -65,6 +65,7 @@ public:
 private:
     std::list<hsUint32> fTransactions;
     hsMutex fNetMutex;
+    plResManager* fMgr;
 
     PurpleAccount* fAccount;
     PurpleConnection* fConnection;
@@ -87,6 +88,8 @@ public:
 
     PurpleAccount* getAccount() const { return fAccount; }
     PurpleConnection* getConnection() const { return fConnection; }
+
+    plResManager* getResManager() const { return fMgr; }
 
     void requestKey(plString name);
     plKey getKey() const { return fAvatarKey; }
