@@ -211,9 +211,6 @@ void kiClient::killClient(CliType client) {
     }
 
     pnClient* cli = fClients[client];
-    if (cli != NULL && cli->isConnected()) {
-        cli->disconnect();
-    }
     delete cli;
     fClients[client] = NULL;
 }

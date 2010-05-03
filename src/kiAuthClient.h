@@ -28,6 +28,7 @@
 class kiAuthClient : public pnAuthClient {
 private:
     enum Nodes {
+        kPlayerInfo,
         kBuddyList,
         kIgnoreList,
         kHoodOwners,
@@ -65,6 +66,7 @@ private:
     hsThreadCondition fCondChallenge;
     hsThreadCondition fCondPlayers;
     hsThreadCondition fCondActive;
+    hsThreadCondition fCondLogout;
     guint fTimeout;
 
     hsUint32 fServerChallenge;
@@ -76,8 +78,8 @@ private:
     plString fPlayerModel;
     plUuid fAccountUuid;
     std::map<hsUint32, std::list<hsUint32> > fRefs;
-    pnVaultPlayerInfoNode* fSelf;
     hsUint32 fNodeIDs[kNumNodes];
+    gboolean fDisposing;
 };
 
 #endif

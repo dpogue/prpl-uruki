@@ -62,11 +62,16 @@ kiAuthClient::kiAuthClient(kiClient* master)
 }
 
 kiAuthClient::~kiAuthClient() {
-    if (fSelf != NULL) {
-        fSelf->setAgeInstName("");
-        fSelf->setOnline(0);
-        this->sendVaultNodeSave(fSelf->getNodeIdx(), plUuid(),
-                (const pnVaultNode&)*fSelf);
+    fDisposing = TRUE;
+
+    if (!fPlayerName.empty()) {
+        pnVaultPlayerInfoNode* node = new pnVaultPlayerInfoNode();
+        node->setNodeIdx(fNodeIDs[kPlayerInfo]);
+        node->setAgeInstName(plString());
+        node->setOnline(0);
+        this->sendVaultNodeSave(fNodeIDs[kPlayerInfo], plUuid(),
+                (const pnVaultNode&)*node);
+        fCondLogout.wait();
     }
     fMaster = NULL;
     if (fTimeout != 0) {
@@ -228,7 +233,7 @@ void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
         vnode = pnVaultPlayerInfoNode::Convert(&tnode);
 
         if (vnode->getPlayerId() == fPlayerID) {
-            fSelf = vnode;
+            fNodeIDs[kPlayerInfo] = vnode->getNodeIdx();
             vnode->setOnline(1);
             vnode->setAgeInstName("D'ni-Riltagamin");
             fMaster->push(this->sendVaultNodeSave(vnode->getNodeIdx(), 
@@ -272,6 +277,9 @@ void kiAuthClient::onVaultSaveNodeReply(hsUint32 transId,
 
     if (result != kNetSuccess) {
         fMaster->set_error(kiClient::kAuth, result);
-        return;
+    }
+
+    if (fDisposing) {
+        fCondLogout.signal();
     }
 }
