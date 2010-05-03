@@ -128,8 +128,8 @@ void ki_set_status(PurpleAccount* account, PurpleStatus* status) {
 
 void ki_add_buddy(PurpleConnection* pc, PurpleBuddy* buddy,
                     PurpleGroup* group) {
-    /* TODO */
-    return;
+    kiClient* ki = (kiClient*)(pc->proto_data);
+    ki->add_buddy(buddy);
 }
 
 void ki_add_buddies(PurpleConnection* pc, GList* buddies, GList* groups) {

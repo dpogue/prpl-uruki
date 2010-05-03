@@ -57,10 +57,12 @@ kiClient::~kiClient() {
     fConnection = NULL;
 }
 
-void kiClient::push(hsUint32 transID) {
+hsUint32 kiClient::push(hsUint32 transID) {
     fNetMutex.lock();
     fTransactions.push_back(transID);
     fNetMutex.unlock();
+
+    return transID;
 }
 
 void kiClient::pop(hsUint32 transID) {
@@ -110,6 +112,18 @@ void kiClient::ping() {
     }
 }
 
+gboolean kiClient::has_buddy(hsUint32 ki) {
+    gboolean ret = FALSE;
+
+    fBuddyMutex.lock();
+    if (fBuddies.find(ki) != fBuddies.end()) {
+        ret = TRUE;
+    }
+    fBuddyMutex.unlock();
+
+    return ret;
+}
+
 void kiClient::update_buddy(pnVaultPlayerInfoNode* node) {
     kiVaultBuddy* buddy = new kiVaultBuddy();
 
@@ -118,12 +132,19 @@ void kiClient::update_buddy(pnVaultPlayerInfoNode* node) {
     buddy->fLocation = node->getAgeInstName();
     buddy->fOnline = node->getOnline();
 
-    fBuddies[node->getNodeIdx()] = buddy;
+    fBuddyMutex.lock();
+    fBuddies[node->getPlayerId()] = buddy;
+    fBuddyMutex.unlock();
 
     clo_Buddy* closure = new clo_Buddy();
     closure->client = this;
     closure->buddy = buddy;
     g_idle_add(ki_update_buddy, closure);
+}
+
+void kiClient::add_buddy(PurpleBuddy* buddy) {
+    ((kiAuthClient*)fClients[kAuth])->addBuddy(
+        plString(purple_buddy_get_name(buddy)).toUint());
 }
 
 void kiClient::gate_file_callback() {
@@ -148,12 +169,50 @@ void kiClient::file_build_callback() {
     }
 }
 
+const char* kiClient::get_client_name(CliType client) {
+    switch (client) {
+        case kGate:
+            return "Gatekeeper";
+        case kAuth:
+            return "AuthSrv";
+        case kFile:
+            return "FileSrv";
+        case kGame:
+            return "GameSrv";
+        default:
+            return NULL;
+    }
+}
+
 void kiClient::set_error(PurpleConnectionError e, const char* msg) {
-    purple_connection_error_reason(fConnection, e, msg);
+    clo_Error* closure = new clo_Error();
+    closure->client = this;
+    closure->e = e;
+    closure->msg = g_strdup(msg);
+
+    g_idle_add(ki_purple_error, closure);
 }
 
 void kiClient::set_error(CliType client, ENetError e) {
-    /* This MUST call set_error (above) using g_idle_add!!! */
+    clo_Error* closure = new clo_Error();
+    closure->client = this;
+
+    switch(e) {
+        case kNetSuccess:
+            /* Everything completed successfully.
+               Would you like to send an error report?
+
+               http://img.thedailywtf.com/images/201002/errord/Error.png
+             */
+            return;
+        default:
+            closure->e = PURPLE_CONNECTION_ERROR_NETWORK_ERROR;
+            closure->msg = g_strdup_printf("%s: Network Error",
+                    this->get_client_name(client));
+            break;
+    }
+
+    g_idle_add(ki_purple_error, closure);
 }
 
 void kiClient::setAddress(CliType client, const plString address) {

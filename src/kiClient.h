@@ -23,6 +23,7 @@
 #include <auth/pnVaultNodeTypes.hpp>
 #include <list>
 #include <map>
+#include <set>
 
 struct kiVaultBuddy {
     hsUint32 fPlayerKI;
@@ -45,26 +46,30 @@ public:
     virtual ~kiClient();
 
     /* Transaction Methods */
-    void push(hsUint32 transID);
+    hsUint32 push(hsUint32 transID);
     void pop(hsUint32 transID);
 
     /* Client Methods */
     void connect();
     void disconnect();
     void ping();
+    gboolean has_buddy(hsUint32 ki);
     void update_buddy(pnVaultPlayerInfoNode* node);
+    void add_buddy(PurpleBuddy* buddy);
 
     /* Callbacks */
     void gate_file_callback();
     void file_build_callback();
 
     /* Error Handling */
+    const char* get_client_name(CliType client);
     void set_error(PurpleConnectionError e, const char* msg);
     void set_error(CliType client, ENetError e);
 
 private:
     std::list<hsUint32> fTransactions;
     hsMutex fNetMutex;
+    hsMutex fBuddyMutex;
     plResManager* fMgr;
 
     PurpleAccount* fAccount;

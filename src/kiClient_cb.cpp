@@ -111,6 +111,25 @@ static void auth_connect(gpointer data, gint fd, const gchar* error) {
     }
 }
 
+struct clo_Error {
+    kiClient* client;
+    PurpleConnectionError e;
+    char* msg;
+}
+
+static gboolean ki_purple_error(gpointer data) {
+    clo_Error* closure = (clo_Error*)data;
+    kiClient* client = closure->client;
+
+    purple_connection_error_reason(client->getConnection(), closure->e,
+            closure->msg);
+
+    free(closure->msg);
+    delete closure;
+
+    return FALSE;
+}
+
 struct clo_Buddy {
     kiClient* client;
     kiVaultBuddy* buddy;

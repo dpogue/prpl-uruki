@@ -122,6 +122,15 @@ void kiAuthClient::ping() {
     }
 }
 
+void kiAuthClient::addBuddy(hsUint32 playerId) {
+    hsUint32 transId;
+    pnVaultPlayerInfoNode* vnode = new pnVaultPlayerInfoNode();
+    vnode->setPlayerId(playerId);
+
+    transId = fMaster->push(this->sendVaultNodeFind((pnVaultNode&)*vnode));
+    fTransAddBuddy.insert(transId);
+}
+
 void kiAuthClient::onPingReply(hsUint32 transId, hsUint32 pingTimeMs) {
     if (fTimeout != 0) {
         g_source_remove(fTimeout);
@@ -239,14 +248,7 @@ void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
             fMaster->push(this->sendVaultNodeSave(vnode->getNodeIdx(), 
                         plUuid(), (const pnVaultNode&)*vnode));
         } else {
-            /* Hacks to only add buddies -_- */
-            hsUint32 bl = fNodeIDs[kBuddyList];
-            std::list<hsUint32>::iterator i;
-            for (i = fRefs[bl].begin(); i != fRefs[bl].end(); i++) {
-                if (vnode->getNodeIdx() == *i) {
-                    fMaster->update_buddy(vnode);
-                }
-            }
+            fMaster->update_buddy(vnode);
         }
     }
     fVaultMutex.unlock();
@@ -254,21 +256,25 @@ void kiAuthClient::onVaultNodeFetched(hsUint32 transId, ENetError result,
 
 void kiAuthClient::onVaultNodeChanged(hsUint32 nodeId,
         const plUuid& revisionId) {
+    /*if (fNodeIDs[kBuddyList] == nodeId) {
+        fMaster->push(this->sendVaultNodeFetch(nodeId));
+        return;
+    }
     if (fNodeIDs[kBuddyList] != 0) {
+        hsUint32 bidx = fNodeIDs[kBuddyList];
         std::list<hsUint32>::iterator i;
-        for (i = fRefs[fNodeIDs[kBuddyList]].begin();
-             i != fRefs[fNodeIDs[kBuddyList]].end();
-             i++)
-        {
+        for (i = fRefs[fNodeIDs[bidx]].begin();
+                i != fRefs[fNodeIDs[bidx]].end(); i++) {
             if (nodeId == *i) {
                 fMaster->push(this->sendVaultNodeFetch(*i));
                 return;
             }
         }
     }
-    if (fNodeIDs[kIgnoreList] != 0) {
+    if (fNodeIDs[kIgnoreList] != 0) {*/
         /* TODO */
-    }
+    //}
+    fMaster->push(this->sendVaultNodeFetch(nodeId));
 }
 
 void kiAuthClient::onVaultSaveNodeReply(hsUint32 transId,
@@ -281,5 +287,31 @@ void kiAuthClient::onVaultSaveNodeReply(hsUint32 transId,
 
     if (fDisposing) {
         fCondLogout.signal();
+    }
+}
+
+void kiAuthClient::onVaultAddNodeReply(hsUint32 transId, ENetError result) {
+    fMaster->pop(transId);
+
+    if (result != kNetSuccess) {
+        fMaster->set_error(kiClient::kAuth, result);
+    }
+}
+
+void kiAuthClient::onVaultNodeFindReply(hsUint32 transId, ENetError result,
+        size_t count, const hsUint32* nodes) {
+    fMaster->pop(transId);
+
+    if (result != kNetSuccess) {
+        fMaster->set_error(kiClient::kAuth, result);
+        return;
+    }
+
+    if (fTransAddBuddy.find(transId) != fTransAddBuddy.end()) {
+        fTransAddBuddy.erase(fTransAddBuddy.find(transId));
+        for (size_t i = 0; i < count; i++) {
+            fMaster->push(this->sendVaultNodeAdd(fNodeIDs[kBuddyList],
+                        nodes[i], 0));
+        }
     }
 }

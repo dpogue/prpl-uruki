@@ -40,6 +40,7 @@ public:
     virtual ~kiAuthClient();
 
     void setCredentials(plString username, plString password);
+    void addBuddy(hsUint32 playerId);
     void process();
     void ping();
 
@@ -59,6 +60,9 @@ public:
                     const pnVaultNode& node);
     virtual void onVaultNodeChanged(hsUint32 nodeId, const plUuid& revisionId);
     virtual void onVaultSaveNodeReply(hsUint32 transId, ENetError result);
+    virtual void onVaultAddNodeReply(hsUint32 transId, ENetError result);
+    virtual void onVaultNodeFindReply(hsUint32 transId, ENetError result,
+                    size_t count, const hsUint32* nodes);
 
 private:
     kiClient* fMaster;
@@ -68,6 +72,8 @@ private:
     hsThreadCondition fCondActive;
     hsThreadCondition fCondLogout;
     guint fTimeout;
+
+    std::set<hsUint32> fTransAddBuddy;
 
     hsUint32 fServerChallenge;
     hsUint32 fClientChallenge;
