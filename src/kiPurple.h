@@ -21,6 +21,7 @@
 
 #include "kiHeaders.h"
 #include "kiClient.h"
+#include "kiUtils.h"
 
 #ifdef __cplusplus
 extern "C" {

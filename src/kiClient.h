@@ -21,9 +21,6 @@
 
 #include "kiHeaders.h"
 #include <auth/pnVaultNodeTypes.hpp>
-#include <list>
-#include <map>
-#include <set>
 
 struct kiVaultBuddy {
     hsUint32 fPlayerKI;
@@ -75,6 +72,7 @@ private:
     PurpleAccount* fAccount;
     PurpleConnection* fConnection;
     std::map<hsUint32, kiVaultBuddy*> fBuddies;
+    std::list<hsUint32> fIgnored;
     plString fAddresses[kNumClients];
     pnClient* fClients[kNumClients];
     PurpleProxyConnectFunction fConnectFunc[kNumClients];

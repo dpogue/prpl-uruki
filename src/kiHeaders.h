@@ -35,6 +35,12 @@
 #	define _(a) a
 #endif
 
+/* STL headers */
+#include <algorithm>
+#include <list>
+#include <map>
+#include <set>
+
 /* libHSPlasma headers */
 #include <Debug/plDebug.h>
 #include <pnClient.h>
