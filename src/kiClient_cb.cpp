@@ -115,7 +115,7 @@ struct clo_Error {
     kiClient* client;
     PurpleConnectionError e;
     char* msg;
-}
+};
 
 static gboolean ki_purple_error(gpointer data) {
     clo_Error* closure = (clo_Error*)data;
