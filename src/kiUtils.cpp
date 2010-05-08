@@ -18,12 +18,12 @@
 
 #include "kiUtils.h"
 
-plString GetFancyAgeName(plString agename) {
+const char* GetFancyAgeName(const plString agename) {
     if ((agename == "Personal") || (agename == "philRelto")) {
         return "Relto";
     } else if (agename.startsWith("GuildPub-")) {
-        return plString::Format("Guild of %s Pub",
-               agename.afterLast('-'));
+        return g_strdup_printf("Guild of %s Pub",
+               agename.afterLast('-').cstr());
     } else if (agename == "Cleft") {
         return "D'ni-Riltagamin";
     } else if ((agename == "Neighborhood02") || (agename == "Kirel")) {
@@ -58,6 +58,6 @@ plString GetFancyAgeName(plString agename) {
     } else if (agename == "AhnonayCathedral") {
         return "Ahnonay Cathedral";
     } else {
-        return agename;
+        return agename.cstr();
     }
 }

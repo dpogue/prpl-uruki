@@ -19,6 +19,8 @@
 #ifndef _KI_UTILS_H
 #define _KI_UTILS_H
 
-plString GetFancyAgeName(plString agename);
+#include "kiHeaders.h"
+
+const char* GetFancyAgeName(plString agename);
 
 #endif

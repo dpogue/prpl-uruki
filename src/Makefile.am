@@ -4,7 +4,8 @@ EXTRA_DIST = \
 	kiGateClient.h \
 	kiClient.h \
 	kiFileClient.h \
-	kiPurple.h
+	kiPurple.h \
+	kiUtils.h
 
 INCLUDES = \
 	-I$(top_srcdir) \
@@ -22,6 +23,7 @@ liburuki_la_SOURCES = \
 	kiFileClient.cpp \
 	kiGateClient.cpp \
 	kiPurple.cpp \
+	kiUtils.cpp \
 	liburuki.cpp
 
 liburuki_la_LIBADD = \
