@@ -50,7 +50,7 @@ PurplePluginProtocolInfo prpl_info = {
     NULL,                                   /* set_idle */
     NULL,                                   /* change_passwd */
     ki_add_buddy,                           /* add_buddy */
-    ki_add_buddies,                         /* add_buddies */
+    NULL,                                   /* add_buddies */
     ki_remove_buddy,                        /* remove_buddy */
     NULL,                                   /* remove_buddies */
     NULL,                                   /* add_permit */

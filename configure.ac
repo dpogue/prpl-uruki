@@ -58,9 +58,13 @@ PKG_CHECK_MODULES(PURPLE, purple, [AC_DEFINE(HAVE_PURPLE, 1, [Define if we've fo
 AC_SUBST(PURPLE_CFLAGS)
 AC_SUBST(PURPLE_LIBS)
 
-AM_PATH_GLIB_2_0(2.12.0,, AC_MSG_ERROR([GLib 2.0 is required to build Gfire; please make sure you have the GLib development headers installed. The latest version of GLib is always available at http://www.gtk.org]), gthread)
+AM_PATH_GLIB_2_0(2.12.0,, AC_MSG_ERROR([GLib 2.0 is required to build; please make sure you have the GLib development headers installed. The latest version of GLib is always available at http://www.gtk.org]), gthread)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+
+PKG_CHECK_MODULES(HSPLASMANET, libhsplasmanet)
+AC_SUBST(HSPLASMANET_CFLAGS)
+AC_SUBST(HSPLASMANET_LIBS)
 
 
 # Plugins

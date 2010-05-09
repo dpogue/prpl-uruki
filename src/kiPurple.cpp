@@ -133,11 +133,6 @@ void ki_add_buddy(PurpleConnection* pc, PurpleBuddy* buddy,
     ki->add_buddy(buddy);
 }
 
-void ki_add_buddies(PurpleConnection* pc, GList* buddies, GList* groups) {
-    /* TODO */
-    return;
-}
-
 void ki_remove_buddy(PurpleConnection* pc, PurpleBuddy* buddy,
                       PurpleGroup* group) {
     /* TODO */
