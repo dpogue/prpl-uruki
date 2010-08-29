@@ -6,9 +6,19 @@ syntax: glob
 *.dSYM
 .*.swp
 Makefile
+Makefile.in
+*.m4
+*.Plo
+*.lo
+*.la
+*.h.in
+*~
 
 syntax: regexp
 ^dat/
 ^doc/
+.deps/
+autom4te.cache/
+.libs/
 CMakeFiles/
 build/
